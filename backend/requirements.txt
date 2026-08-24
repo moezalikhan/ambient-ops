@@ -1,0 +1,13 @@
+fastapi>=0.118
+uvicorn[standard]>=0.37
+httpx>=0.28
+python-dotenv>=1.1
+pydantic>=2.11
+
+# Agent loop (Step 5)
+anthropic>=0.69
+
+# Dev
+pytest>=8.4
+pytest-asyncio>=1.1
+ruff>=0.13

@@ -1,0 +1,28 @@
+{
+  "_note": "PLACEHOLDER COORDINATES. City and the two real routes are Minqi's call (spec sections 11-12). Every route below has status 'placeholder' until confirmed. Requirement: transit stop to a school or clinic, 400-900m.",
+  "city_confirmed": false,
+  "routes": [
+    {
+      "id": "route_a",
+      "name": "Placeholder A — transit stop to school",
+      "city": "TBD",
+      "origin_name": "Bus stop (placeholder)",
+      "destination_name": "School (placeholder)",
+      "origin": { "lon": 54.3773, "lat": 24.4539 },
+      "destination": { "lon": 54.3812, "lat": 24.4571 },
+      "distance_m": null,
+      "status": "placeholder"
+    },
+    {
+      "id": "route_b",
+      "name": "Placeholder B — transit stop to clinic",
+      "city": "TBD",
+      "origin_name": "Metro stop (placeholder)",
+      "destination_name": "Clinic (placeholder)",
+      "origin": { "lon": 54.3701, "lat": 24.4801 },
+      "destination": { "lon": 54.3755, "lat": 24.4842 },
+      "distance_m": null,
+      "status": "placeholder"
+    }
+  ]
+}

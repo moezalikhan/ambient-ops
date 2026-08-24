@@ -1,0 +1,13 @@
+# conda env create -f environment.yml
+# conda activate ambient-ops
+#
+# Python 3.12 rather than latest: broadest wheel coverage for the geo and
+# scientific packages the scoring pipeline picks up in Steps 3-4.
+name: ambient-ops
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+      - -r backend/requirements.txt
