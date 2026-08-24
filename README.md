@@ -98,7 +98,7 @@ pytest backend/tests -q
 | Step | Scope | State |
 |---|---|---|
 | 1 | Repo, scaffold, CI, API contract | ✅ done |
-| 2 | FortyGuard service — submit, poll, cache, layer verification | ⬜ |
+| 2 | FortyGuard service — submit, poll, cache, layer verification | ✅ done |
 | 3 | Routing, segmentation, OSM context | ⬜ |
 | 4 | Scoring model, intervention rules | ⬜ |
 | 5 | Agent orchestrator, tools, endpoints | ⬜ |
