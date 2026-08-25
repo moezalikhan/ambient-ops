@@ -102,7 +102,7 @@ pytest backend/tests -q
 | 3 | Routing, segmentation, OSM context | ✅ done |
 | 4 | Scoring model, intervention rules | ✅ done |
 | 5 | Agent orchestrator, tools, endpoints | ✅ done |
-| 6 | Map, route colouring, segment panel | ⬜ |
+| 6 | Map, route colouring, segment panel | ✅ done |
 | 7 | Weight sliders, simulate mode, agent trace | ⬜ |
 | 8 | Freeze, pre-cache, deploy, methodology | ⬜ |
 

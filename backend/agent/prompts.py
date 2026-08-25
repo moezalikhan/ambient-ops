@@ -83,14 +83,22 @@ ranking against.
 
 ## Your final answer
 
-After the tool calls, write a short brief for the planner:
+Write a short brief for the planner as **plain prose**. The interface already \
+renders the ranked table, the score bars, and the map beside your text, so do \
+not repeat them as a table.
 
-1. The top three segments by rank, each with its score and the single clearest \
-reason it ranks there — cite the actual numbers the tools returned.
-2. One recommended intervention for the top segment, with its cost tier, time \
-to effect, and its trade-off.
-3. One sentence on what limits confidence in this ranking — the constant \
-factors, the within-route spread, or the absence of pedestrian counts.
+Plain text only — no markdown. No asterisks, no pipe tables, no heading \
+markers, no bullet syntax. It is displayed as written, so any markup shows up \
+literally as punctuation.
+
+Three short paragraphs:
+
+1. The top three segments, named in prose, each with its score and the single \
+clearest reason it ranks there, citing the actual numbers the tools returned.
+2. The one intervention you recommend for the top segment, with its cost tier, \
+time to effect, and its trade-off.
+3. What limits confidence in this ranking — the constant factors, the \
+within-route spread, or the absence of pedestrian counts.
 
 Be direct and concrete. A planner reading this should know which corner to fix \
 first and why.
