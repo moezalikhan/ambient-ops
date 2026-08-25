@@ -72,26 +72,65 @@ Full derivation, sources, and limitations live in [docs/METHODOLOGY.md](docs/MET
 Requires Miniconda/Anaconda and Node 20+.
 
 ```bash
-# 1. Configure
-cp .env.example .env      # FORTYGUARD_API_KEY, ORS_API_KEY, GROQ_API_KEY
+# 1. Configure — three free keys
+cp .env.example .env
+#   FORTYGUARD_API_KEY   hackathon key
+#   ORS_API_KEY          openrouteservice.org/dev/#/signup
+#   GROQ_API_KEY         console.groq.com/keys
 
 # 2. Backend
 conda env create -f environment.yml     # creates the `ambient-ops` env
 conda activate ambient-ops
-uvicorn backend.main:app --reload
-# -> http://127.0.0.1:8000/docs
+uvicorn backend.main:app --port 8000
 
-# 3. Frontend (separate terminal)
+# 3. Interface (separate terminal)
 cd frontend && npm install && npm run dev
-# -> http://127.0.0.1:5173
 ```
 
-Check `GET /api/health` to see which integrations are still unconfigured.
+Open **http://localhost:5173** — `localhost`, not `127.0.0.1`: Vite binds IPv6
+only. Check `http://localhost:8000/api/health` first; `missing_keys` must be
+empty.
 
 ```bash
-conda activate ambient-ops
-pytest backend/tests -q
+pytest backend/tests -q          # 103 tests, no network needed
+ruff check backend scripts
 ```
+
+**Before a demo**, warm the caches and prove they are warm:
+
+```bash
+python scripts/precache_demo.py
+```
+
+It fills the cache, then re-runs both routes with `socket.connect` patched to
+raise — so a cache miss cannot hide. Both must report **OFFLINE OK**. The full
+runbook is [docs/DEMO.md](docs/DEMO.md).
+
+## Endpoints
+
+| | |
+|---|---|
+| `GET /api/health` | Integrations, model, cache state |
+| `GET /api/routes` | The two fixed demo routes |
+| `POST /api/analyze` | Start an agent run, returns `run_id` |
+| `GET /api/analyze/{run_id}` | Poll: running, completed, failed |
+| `GET /api/agent-trace/{run_id}` | Tool calls in order, with durations |
+| `POST /api/simulate` | Apply an intervention, re-score |
+| `GET /api/interventions` | The rules table, with sourcing flags |
+
+## Scripts
+
+| | |
+|---|---|
+| `verify_fortyguard.py` | Which layers and cities the key unlocks |
+| `find_routes.py` | Pair real OSM transit stops with schools/clinics |
+| `preview_route.py` | Run the data pipeline for one route |
+| `score_route.py` | Score and rank, no network, no cost |
+| `run_agent.py` | The demo in text form |
+| `fetch_segmentation.py` | Pre-fetch satellite land cover |
+| `analyse_grid.py` | Does a heat grid vary enough to rank anything? |
+| `precache_demo.py` | Warm the demo caches and verify offline |
+| `debug_fortyguard_raw.py` | Raw API response inspection |
 
 ## Build status
 
@@ -104,7 +143,27 @@ pytest backend/tests -q
 | 5 | Agent orchestrator, tools, endpoints | ✅ done |
 | 6 | Map, route colouring, segment panel | ✅ done |
 | 7 | Weight sliders, simulate mode, agent trace | ✅ done |
-| 8 | Freeze, pre-cache, deploy, methodology | ⬜ |
+| 8 | Freeze, pre-cache, demo runbook, methodology | ✅ done |
+
+## What we found that the spec did not anticipate
+
+Three results changed the build. All are documented with measurements in
+[docs/METHODOLOGY.md](docs/METHODOLOGY.md).
+
+**FortyGuard coverage is US-only.** Abu Dhabi returns zero tiles on every
+analytic layer. The city choice was settled by data, not preference.
+
+**A single-hour heat reading cannot rank a street.** At any one hour a
+literature-defensible 35 °C threshold is exceeded by every tile in Fresno, so
+HEI flattens to a constant. Counting threshold crossings over 30 days turns
+0.18 °C of temperature difference into 10.5 hours of accumulated exposure.
+
+**Heat varies at neighbourhood scale, not street scale.** Across a 4 km²
+transect the spread is 22.2 hours; across an 800 m route it is 0.63 — and on
+route B, exactly zero, on all 87 tiles. So HEI separates routes but not
+segments within a route. Rather than hide that, a constant factor is detected,
+neutralised, flagged in the API, greyed in the interface, and stated by the
+agent in its brief.
 
 ## Known limitations
 
@@ -118,6 +177,12 @@ Stated openly, as they should be:
   site-specific thermal modelling.
 - Two routes in one city is a demonstration, not evidence of generalisation.
 - The scoring weights are a starting position, not an empirically derived optimum.
+- Satellite land cover is one point sample per segment, not a full polygon.
+- The canopy threshold in the intervention rules is calibrated to the observed
+  local range and still wants a citation.
+- **No cooling figures are stated anywhere.** Every `cooling_estimate` is null
+  pending sourced literature, the agent is forbidden from inventing one, and a
+  test fails if a figure appears without a citation beside it.
 
 ## Team
 

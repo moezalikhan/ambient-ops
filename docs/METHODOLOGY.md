@@ -14,8 +14,13 @@
   the selected region; Fresno is the hottest large city in it, with roughly 25%
   poverty and top-percentile CalEnviroScreen tracts.
 - **Routes:** two, each a transit stop to a school or clinic, 400–900 m.
-  - Route A: TODO
-  - Route B: TODO
+  Selected from OSM data rather than by eye — `scripts/find_routes.py` pairs
+  real bus stops with schools and clinics and measures the walking distance
+  with OpenRouteService, producing 19 candidates in band.
+  - **Route A:** SW Wishon–McKinley bus stop → Heaton Elementary School,
+    862 m, 17 segments.
+  - **Route B:** UMC (Outpatient Services) transit stop → DBH Asian Pacific
+    Islander / Latino Team clinic, 780 m, 16 segments.
 - **Why these routes:** non-discretionary journeys — walked by people with the
   least ability to choose an alternative.
 - **Route selection evidence:** TODO — CalEnviroScreen is a real state dataset
@@ -119,7 +124,7 @@ finding to report, not a number to quietly adjust.
 | Source | Used for | Layer / query | Notes |
 |---|---|---|---|
 | FortyGuard `/v1/heatmap` | HEI | `analytic_type=exceedance` | Verified accessible Aug 24. US-only coverage |
-| FortyGuard `/v1/satellite` | SVI | Segmentation class coverage | Premium endpoint, reachable on the Hackathon key — TODO confirm it returns real classes |
+| FortyGuard `/v1/satellite` | SVI | Segmentation class coverage | Verified Aug 25: 7 classes, one call per segment, ~14,400 credits each |
 | OpenRouteService | Route geometry | Pedestrian profile | |
 | OpenStreetMap (Overpass) | SVI, PSI context | 25 m radius per segment | Volunteer-tagged; completeness varies |
 
@@ -132,9 +137,14 @@ Granularity is 60, 80, or 100 m. Plan: Hackathon tier, 2,000,000 credits,
 roughly 4,220 per heatmap job.
 
 **On preferring FortyGuard segmentation over OSM for SVI.** The spec favours it
-because it is derived from imagery rather than volunteer tagging. If it proves
-usable, say so here; if not, state plainly that OSM is the fallback and that
-tag completeness is a limitation.
+because it is derived from imagery rather than volunteer tagging. It is used,
+and on these routes it is not merely preferable but necessary: OSM returns
+0 trees and no surface tags along either route, while imagery gives
+0.0–15.3% canopy varying per segment. The two agree on the substance — the
+corridor really is near-treeless — but only one of them can rank it.
+
+Land cover is a **point sample at each segment midpoint**, not a polygon
+average. The endpoint takes a point. State this as a limitation.
 
 **Why not a snapshot.** A single-timestamp reading tells you it was hot at 2pm
 last Tuesday, which is weather. Exceedance (how often a location exceeds the
