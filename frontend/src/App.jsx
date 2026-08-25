@@ -58,8 +58,10 @@ export default function App() {
     setElapsed(0)
 
     try {
-      setWeights({ ...DEFAULT_WEIGHTS })
-      const { run_id } = await analyze(routeId)
+      // Send the planner's weights to the agent, so its scoring and its
+      // written brief describe the same ranking the panel shows. Resetting
+      // them here would silently discard whatever the sliders were set to.
+      const { run_id } = await analyze(routeId, weights)
       timer.current = setInterval(async () => {
         setElapsed(Math.round((Date.now() - startedAt) / 1000))
         try {
@@ -82,7 +84,7 @@ export default function App() {
       setRunning(false)
       setError(e.message)
     }
-  }, [routeId])
+  }, [routeId, weights])
 
   const base = run?.status === 'completed' ? run.result : null
   // Re-rank in the browser as the sliders move: the factors come back
