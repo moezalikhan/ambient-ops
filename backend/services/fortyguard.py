@@ -33,6 +33,7 @@ from backend.cache import store
 from backend.services.geo import buffered_bbox_polygon, feature_centroid, polygon_area_km2
 
 CACHE_NAMESPACE = "fortyguard_heatmap"
+SATELLITE_NAMESPACE = "fortyguard_satellite"
 
 # Heat grids for a fixed historical window do not change. Cache for a week so
 # repeated demo runs never touch the network.
@@ -343,3 +344,70 @@ def get_heat_grid_for_route(
     """Convenience wrapper: buffer a route into one AOI and fetch its grid."""
     polygon = buffered_bbox_polygon(coordinates, config.ROUTE_BUFFER_M)
     return get_heat_grid(polygon, **kwargs)
+
+
+# --- satellite land-cover segmentation ------------------------------------
+# Imagery-derived surface classes, which spec section 5 prefers over
+# volunteer-tagged OSM. Measured on the Fresno routes, OSM has 0 trees and
+# almost no surface tags, so this is the only per-segment signal available for
+# the Surface Vulnerability Index.
+#
+# Costs ~14,400 credits per call (3.4x a heatmap) and takes a POINT, not a
+# polygon — so it is one call per segment. Cached permanently.
+
+SATELLITE_CACHE_MAX_AGE_S = 365 * 24 * 3600
+
+
+def get_surface_segmentation(
+    lat: float,
+    lon: float,
+    granularity: int = 80,
+    use_cache: bool = True,
+    timeout_s: float = 300.0,
+) -> dict[str, Any]:
+    """Land-cover class percentages at one point.
+
+    Returns {classes: {"building": 75.29, "tree": 2.88, ...}, image_year,
+    cache_hit}. Class names contain commas ("road, route") — they are the API's
+    labels, kept verbatim so the mapping to SVI stays auditable.
+    """
+    key = f"{lat:.6f},{lon:.6f}@{granularity}"
+    if use_cache:
+        cached = store.get(SATELLITE_NAMESPACE, key, max_age_s=SATELLITE_CACHE_MAX_AGE_S)
+        if cached is not None:
+            cached["cache_hit"] = True
+            return cached
+
+    payload = {
+        "sat": {"latitude": lat, "longitude": lon},
+        "date_time": {**default_date_window(), "filter_type": 1, "start_time": "14:00"},
+        "granularity": granularity,
+    }
+    with httpx.Client(timeout=60.0) as client:
+        resp = client.post(
+            f"{config.FORTYGUARD_BASE_URL}/satellite", headers=_headers(), json=payload
+        )
+        body = _raise_for_response(resp, "satellite submit")
+        activity_id = (body.get("data") or {}).get("activity_id")
+        if not activity_id:
+            raise FortyGuardError(f"no activity_id in satellite response: {body}")
+        result = poll_status(activity_id, timeout_s=timeout_s, client=client)
+
+    segmentation = result.get("segmentation") or {}
+    classes = segmentation.get("segments") or {}
+    if not classes:
+        raise FortyGuardError(
+            f"satellite completed for {lat},{lon} but returned no classes"
+        )
+
+    out = {
+        "classes": classes,
+        "image_year": result.get("image_year"),
+        "granularity_m": granularity,
+        "lat": lat,
+        "lon": lon,
+        "activity_id": activity_id,
+        "cache_hit": False,
+    }
+    store.put(SATELLITE_NAMESPACE, key, out)
+    return out

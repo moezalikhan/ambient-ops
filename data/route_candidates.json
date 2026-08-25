@@ -1,0 +1,287 @@
+[
+  {
+    "origin_name": "SW WISHON - McKINLEY",
+    "destination_name": "Heaton Elementary School",
+    "destination_kind": "school",
+    "origin": {
+      "lon": -119.8011713,
+      "lat": 36.7647121
+    },
+    "destination": {
+      "lon": -119.7953703,
+      "lat": 36.7640802
+    },
+    "walk_distance_m": 862.4,
+    "walk_duration_s": 620.9
+  },
+  {
+    "origin_name": "Bus stop",
+    "destination_name": "School",
+    "destination_kind": "school",
+    "origin": {
+      "lon": -119.7951519,
+      "lat": 36.7509679
+    },
+    "destination": {
+      "lon": -119.7896142,
+      "lat": 36.7537759
+    },
+    "walk_distance_m": 838.2,
+    "walk_duration_s": 603.5
+  },
+  {
+    "origin_name": "Community Hospital",
+    "destination_name": "Sunshine School",
+    "destination_kind": "school",
+    "origin": {
+      "lon": -119.7837732,
+      "lat": 36.7418363
+    },
+    "destination": {
+      "lon": -119.7787553,
+      "lat": 36.744116
+    },
+    "walk_distance_m": 627.0,
+    "walk_duration_s": 451.4
+  },
+  {
+    "origin_name": "Community Hospital",
+    "destination_name": "School",
+    "destination_kind": "school",
+    "origin": {
+      "lon": -119.7837732,
+      "lat": 36.7418363
+    },
+    "destination": {
+      "lon": -119.7781681,
+      "lat": 36.7446157
+    },
+    "walk_distance_m": 690.8,
+    "walk_duration_s": 497.4
+  },
+  {
+    "origin_name": "SW WISHON - McKINLEY",
+    "destination_name": "Fresno High School",
+    "destination_kind": "school",
+    "origin": {
+      "lon": -119.8011713,
+      "lat": 36.7647121
+    },
+    "destination": {
+      "lon": -119.806342,
+      "lat": 36.7667324
+    },
+    "walk_distance_m": 679.9,
+    "walk_duration_s": 489.5
+  },
+  {
+    "origin_name": "Bus stop",
+    "destination_name": "Aspen Ridge Public School",
+    "destination_kind": "school",
+    "origin": {
+      "lon": -119.7904084,
+      "lat": 36.783884
+    },
+    "destination": {
+      "lon": -119.7855622,
+      "lat": 36.7875508
+    },
+    "walk_distance_m": 868.7,
+    "walk_duration_s": 625.4
+  },
+  {
+    "origin_name": "Community Hospital",
+    "destination_name": "Jefferson Elementary School",
+    "destination_kind": "school",
+    "origin": {
+      "lon": -119.7837732,
+      "lat": 36.7418363
+    },
+    "destination": {
+      "lon": -119.7784775,
+      "lat": 36.7452271
+    },
+    "walk_distance_m": 689.9,
+    "walk_duration_s": 496.7
+  },
+  {
+    "origin_name": "Fresno Veteran's Hospital",
+    "destination_name": "School",
+    "destination_kind": "school",
+    "origin": {
+      "lon": -119.781437,
+      "lat": 36.7726383
+    },
+    "destination": {
+      "lon": -119.7806967,
+      "lat": 36.7683791
+    },
+    "walk_distance_m": 643.1,
+    "walk_duration_s": 463.0
+  },
+  {
+    "origin_name": "Bus stop",
+    "destination_name": "Fort Miller",
+    "destination_kind": "school",
+    "origin": {
+      "lon": -119.7904084,
+      "lat": 36.783884
+    },
+    "destination": {
+      "lon": -119.7950686,
+      "lat": 36.7858709
+    },
+    "walk_distance_m": 537.3,
+    "walk_duration_s": 386.9
+  },
+  {
+    "origin_name": "M Street Station",
+    "destination_name": "Emerson School",
+    "destination_kind": "school",
+    "origin": {
+      "lon": -119.7823024,
+      "lat": 36.7322635
+    },
+    "destination": {
+      "lon": -119.779866,
+      "lat": 36.7285604
+    },
+    "walk_distance_m": 648.7,
+    "walk_duration_s": 467.1
+  },
+  {
+    "origin_name": "Fresno Veteran's Hospital",
+    "destination_name": "School",
+    "destination_kind": "school",
+    "origin": {
+      "lon": -119.781437,
+      "lat": 36.7726383
+    },
+    "destination": {
+      "lon": -119.7764428,
+      "lat": 36.7714875
+    },
+    "walk_distance_m": 861.0,
+    "walk_duration_s": 619.9
+  },
+  {
+    "origin_name": "Bus stop",
+    "destination_name": "Fort Miller Middle School",
+    "destination_kind": "school",
+    "origin": {
+      "lon": -119.7904084,
+      "lat": 36.783884
+    },
+    "destination": {
+      "lon": -119.7951458,
+      "lat": 36.7855045
+    },
+    "walk_distance_m": 544.9,
+    "walk_duration_s": 392.4
+  },
+  {
+    "origin_name": "Community Regional Center Southbound",
+    "destination_name": "School",
+    "destination_kind": "school",
+    "origin": {
+      "lon": -119.784499,
+      "lat": 36.7416388
+    },
+    "destination": {
+      "lon": -119.7857356,
+      "lat": 36.7454988
+    },
+    "walk_distance_m": 528.5,
+    "walk_duration_s": 380.5
+  },
+  {
+    "origin_name": "Community Hospital",
+    "destination_name": "School",
+    "destination_kind": "school",
+    "origin": {
+      "lon": -119.7837732,
+      "lat": 36.7418363
+    },
+    "destination": {
+      "lon": -119.7800972,
+      "lat": 36.7441052
+    },
+    "walk_distance_m": 504.9,
+    "walk_duration_s": 363.5
+  },
+  {
+    "origin_name": "Save Mart Center - Eastbound",
+    "destination_name": "University High School - Fresno",
+    "destination_kind": "school",
+    "origin": {
+      "lon": -119.7394502,
+      "lat": 36.8107654
+    },
+    "destination": {
+      "lon": -119.7440233,
+      "lat": 36.8101591
+    },
+    "walk_distance_m": 524.2,
+    "walk_duration_s": 377.4
+  },
+  {
+    "origin_name": "Amtrak/Greyhound Station",
+    "destination_name": "Community Regional Medical Center",
+    "destination_kind": "hospital",
+    "origin": {
+      "lon": -119.7833227,
+      "lat": 36.7384538
+    },
+    "destination": {
+      "lon": -119.7843453,
+      "lat": 36.7434359
+    },
+    "walk_distance_m": 857.3,
+    "walk_duration_s": 617.2
+  },
+  {
+    "origin_name": "Amtrak/Greyhound Station",
+    "destination_name": "Hospital",
+    "destination_kind": "hospital",
+    "origin": {
+      "lon": -119.7833227,
+      "lat": 36.7384538
+    },
+    "destination": {
+      "lon": -119.7824915,
+      "lat": 36.7430972
+    },
+    "walk_distance_m": 718.6,
+    "walk_duration_s": 517.4
+  },
+  {
+    "origin_name": "Bus stop",
+    "destination_name": "Kings Winery Medical Clinic",
+    "destination_kind": "clinic",
+    "origin": {
+      "lon": -119.7355824,
+      "lat": 36.7358224
+    },
+    "destination": {
+      "lon": -119.7305356,
+      "lat": 36.7366017
+    },
+    "walk_distance_m": 750.7,
+    "walk_duration_s": 540.5
+  },
+  {
+    "origin_name": "UMC (Outpatient Services)",
+    "destination_name": "DBH: Asian Pacific Islander Program, Latino Team, S.E.E.S. Program",
+    "destination_kind": "clinic",
+    "origin": {
+      "lon": -119.7543221,
+      "lat": 36.7385601
+    },
+    "destination": {
+      "lon": -119.7504686,
+      "lat": 36.7366176
+    },
+    "walk_distance_m": 780.5,
+    "walk_duration_s": 562.0
+  }
+]

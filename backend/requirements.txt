@@ -4,8 +4,11 @@ httpx>=0.28
 python-dotenv>=1.1
 pydantic>=2.11
 
-# Agent loop (Step 5)
-anthropic>=0.69
+# Agent loop (Step 5). The `openai` package is used purely as an
+# OpenAI-compatible HTTP client — Groq, Gemini, Cerebras, OpenRouter, Mistral
+# and Ollama all expose that same interface, so the provider is a base_url
+# swap rather than a code change. No paid provider is required.
+openai>=1.109
 
 # Dev
 pytest>=8.4

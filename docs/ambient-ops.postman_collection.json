@@ -1,0 +1,159 @@
+{
+  "info": {
+    "name": "FortyGuard Temperature API — Ambient Ops",
+    "description": "Direct calls to the FortyGuard v1 API, matching what backend/services/fortyguard.py sends.\n\nSETUP: open the collection's Variables tab and paste your key into apiKey (Current value). Never save it into Initial value — that column is what gets committed and shared.\n\nThe API is asynchronous: 'Submit' returns an activity_id, then poll 'Get status' until status is Completed. The submit requests capture the activity_id automatically, so 'Get status' needs no editing.\n\nAOI is a 4 km² box over Fresno, CA. Coverage is US-only.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "https://api.fortyguard.com/v1", "type": "string" },
+    { "key": "apiKey", "value": "", "type": "string" },
+    { "key": "activityId", "value": "", "type": "string" },
+    { "key": "startDate", "value": "2026-07-24", "type": "string" },
+    { "key": "endDate", "value": "2026-08-23", "type": "string" }
+  ],
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      { "key": "key", "value": "api-key", "type": "string" },
+      { "key": "value", "value": "{{apiKey}}", "type": "string" },
+      { "key": "in", "value": "header", "type": "string" }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. Submit heatmap — exceedance, 30 days (what Ambient Ops uses)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const b = pm.response.json();",
+              "pm.test('submitted', () => pm.expect(pm.response.code).to.eql(200));",
+              "pm.test('no error flag', () => pm.expect(b.error).to.be.false);",
+              "const id = b.data && b.data.activity_id;",
+              "pm.test('activity_id returned', () => pm.expect(id).to.be.a('string'));",
+              "if (id) {",
+              "  pm.collectionVariables.set('activityId', id);",
+              "  console.log('activity_id saved ->', id);",
+              "  console.log('now run request 2 (Get status) until status is Completed');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/heatmap", "host": ["{{baseUrl}}"], "path": ["heatmap"] },
+        "description": "analytic_type=exceedance counts hours above the threshold.\n\nfilter_type 4 is a range of days. The 30-day window is load-bearing: at any single hour a 35 C threshold is exceeded by every tile in Fresno, so the grid comes back flat. Integrating over 30 days turns 0.18 C of temperature difference into ~10.5 hours of exposure difference.\n\nthreshold and direction apply only to exceedance and persistence.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"polygon_aoi\": {\n    \"type\": \"FeatureCollection\",\n    \"features\": [\n      {\n        \"type\": \"Feature\",\n        \"properties\": {},\n        \"geometry\": {\n          \"type\": \"Polygon\",\n          \"coordinates\": [[\n            [-119.81011102635091, 36.739016888250084],\n            [-119.7876889736491, 36.739016888250084],\n            [-119.7876889736491, 36.75698311174991],\n            [-119.81011102635091, 36.75698311174991],\n            [-119.81011102635091, 36.739016888250084]\n          ]]\n        }\n      }\n    ]\n  },\n  \"date_time\": {\n    \"start_date\": \"{{startDate}}\",\n    \"end_date\": \"{{endDate}}\",\n    \"filter_type\": 4\n  },\n  \"granularity\": 60,\n  \"analytic_type\": \"exceedance\",\n  \"threshold\": 35,\n  \"direction\": \"above\"\n}"
+        }
+      }
+    },
+    {
+      "name": "2. Get status — poll until Completed",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const b = pm.response.json();",
+              "const d = b.data || {};",
+              "console.log('status:', d.status);",
+              "pm.test('request ok', () => pm.expect(pm.response.code).to.eql(200));",
+              "if (String(d.status).toLowerCase() === 'completed') {",
+              "  const feats = ((d.result || {}).map_data || {}).features || [];",
+              "  console.log('tiles:', feats.length);",
+              "  if (feats.length) console.log('first tile properties:', JSON.stringify(feats[0].properties));",
+              "  console.log('stats:', JSON.stringify((d.result || {}).stats_data));",
+              "  pm.test('returned tiles (0 tiles = outside US coverage)', () => pm.expect(feats.length).to.be.above(0));",
+              "} else {",
+              "  console.log('still processing — send this request again in a few seconds');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/status/{{activityId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["status", "{{activityId}}"]
+        },
+        "description": "Send repeatedly until data.status is Completed. A 30-day 4 km² job typically takes 1-3 minutes.\n\nOn completion, data.result contains:\n  map_data   GeoJSON FeatureCollection of tiles\n  stats_data min/max/mean, n_cells, units\n\nTile property names differ by analytic_type:\n  exceedance / persistence / time_of_measure -> value (hours)\n  tcm                                        -> average_temperature (Celsius)\n\nWatch out: tcm tiles list tile_id FIRST. Reading the first numeric property gives you tile indices, not temperatures."
+      }
+    },
+    {
+      "name": "3. Submit heatmap — tcm snapshot (single hour)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const b = pm.response.json();",
+              "const id = b.data && b.data.activity_id;",
+              "if (id) { pm.collectionVariables.set('activityId', id); console.log('activity_id saved ->', id); }"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/heatmap", "host": ["{{baseUrl}}"], "path": ["heatmap"] },
+        "description": "Plain temperature at one hour. filter_type 1 = single hour.\n\nUseful for seeing the raw temperature spread, but NOT what Ambient Ops scores on: a snapshot tells you it was hot at 4pm one day, which is weather rather than reliable danger.\n\nNote threshold and direction are absent — tcm ignores them.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"polygon_aoi\": {\n    \"type\": \"FeatureCollection\",\n    \"features\": [\n      {\n        \"type\": \"Feature\",\n        \"properties\": {},\n        \"geometry\": {\n          \"type\": \"Polygon\",\n          \"coordinates\": [[\n            [-119.81011102635091, 36.739016888250084],\n            [-119.7876889736491, 36.739016888250084],\n            [-119.7876889736491, 36.75698311174991],\n            [-119.81011102635091, 36.75698311174991],\n            [-119.81011102635091, 36.739016888250084]\n          ]]\n        }\n      }\n    ]\n  },\n  \"date_time\": {\n    \"start_date\": \"{{endDate}}\",\n    \"start_time\": \"16:00\",\n    \"filter_type\": 1\n  },\n  \"granularity\": 60,\n  \"analytic_type\": \"tcm\"\n}"
+        }
+      }
+    },
+    {
+      "name": "4. Credit usage and plan",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": {
+          "raw": "{{baseUrl}}/system/fetch-api-key-usage",
+          "host": ["{{baseUrl}}"],
+          "path": ["system", "fetch-api-key-usage"]
+        },
+        "description": "Plan type, credits remaining, and a per-activity breakdown.\n\nThe key goes in the BODY here as well as the header — omitting it returns 422. Roughly 4,220 credits per heatmap job.",
+        "body": { "mode": "raw", "raw": "{\n  \"api_key\": \"{{apiKey}}\"\n}" }
+      }
+    },
+    {
+      "name": "5. Satellite segmentation (Premium endpoint)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const b = pm.response.json();",
+              "const id = b.data && b.data.activity_id;",
+              "if (id) { pm.collectionVariables.set('activityId', id); console.log('activity_id saved ->', id); }"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/satellite", "host": ["{{baseUrl}}"], "path": ["satellite"] },
+        "description": "Land-cover segmentation from imagery — buildings, roads, vegetation, water. If reachable, this is a better source for the Surface Vulnerability Index than OpenStreetMap tags, because it is derived from imagery rather than volunteer tagging.\n\nTakes a point, not a polygon. Poll with request 2.\n\nA Completed status is NOT proof it worked — check that result.segmentation.segments actually contains classes.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sat\": {\n    \"latitude\": 36.7480,\n    \"longitude\": -119.7989\n  },\n  \"date_time\": {\n    \"start_date\": \"{{endDate}}\",\n    \"start_time\": \"14:00\",\n    \"filter_type\": 1\n  },\n  \"granularity\": 80\n}"
+        }
+      }
+    }
+  ]
+}

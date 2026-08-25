@@ -92,8 +92,9 @@ def probe_segmentation(lon: float, lat: float) -> tuple[bool, str]:
         segments = ((result.get("segmentation") or {}).get("segments")) or {}
         if not segments:
             return False, "activity completed but returned no segmentation classes"
-        classes = ", ".join(list(segments)[:6])
-        return True, f"{len(segments)} classes ({classes}) — usable for SVI"
+        # Class names contain commas ("road, route"), so join on something else.
+        classes = " | ".join(list(segments))
+        return True, f"{len(segments)} classes: {classes}"
     except fg.FortyGuardError as e:
         return False, str(e)[:160]
 

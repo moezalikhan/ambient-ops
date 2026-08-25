@@ -1,28 +1,42 @@
 {
-  "_note": "PLACEHOLDER COORDINATES. City and the two real routes are Minqi's call (spec sections 11-12). Every route below has status 'placeholder' until confirmed. Requirement: transit stop to a school or clinic, 400-900m.",
-  "city_confirmed": false,
+  "_note": "Selected by scripts/find_routes.py from OSM bus stops and destinations, walking distances measured with OpenRouteService. Both are transit stop -> school/clinic, 400-900m (spec section 3). Minqi owns final route choice and may replace these.",
+  "city": "Fresno, California",
+  "city_confirmed": true,
+  "coverage_note": "FortyGuard temperature data is US-only; Fresno verified 2026-08-24.",
   "routes": [
     {
       "id": "route_a",
-      "name": "Placeholder A — transit stop to school",
-      "city": "TBD",
-      "origin_name": "Bus stop (placeholder)",
-      "destination_name": "School (placeholder)",
-      "origin": { "lon": 54.3773, "lat": 24.4539 },
-      "destination": { "lon": 54.3812, "lat": 24.4571 },
-      "distance_m": null,
-      "status": "placeholder"
+      "name": "Bus stop to Heaton Elementary School",
+      "city": "Fresno, California",
+      "origin_name": "SW WISHON - McKINLEY",
+      "destination_name": "Heaton Elementary School",
+      "origin": {
+        "lon": -119.8011713,
+        "lat": 36.7647121
+      },
+      "destination": {
+        "lon": -119.7953703,
+        "lat": 36.7640802
+      },
+      "distance_m": 862.4,
+      "status": "confirmed"
     },
     {
       "id": "route_b",
-      "name": "Placeholder B — transit stop to clinic",
-      "city": "TBD",
-      "origin_name": "Metro stop (placeholder)",
-      "destination_name": "Clinic (placeholder)",
-      "origin": { "lon": 54.3701, "lat": 24.4801 },
-      "destination": { "lon": 54.3755, "lat": 24.4842 },
-      "distance_m": null,
-      "status": "placeholder"
+      "name": "Transit stop to behavioural health clinic",
+      "city": "Fresno, California",
+      "origin_name": "UMC (Outpatient Services)",
+      "destination_name": "DBH: Asian Pacific Islander Program, Latino Team, S.E.E.S. Program",
+      "origin": {
+        "lon": -119.7543221,
+        "lat": 36.7385601
+      },
+      "destination": {
+        "lon": -119.7504686,
+        "lat": 36.7366176
+      },
+      "distance_m": 780.5,
+      "status": "confirmed"
     }
   ]
 }

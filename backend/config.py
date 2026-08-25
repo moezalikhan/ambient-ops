@@ -54,8 +54,65 @@ ROUTE_BUFFER_M = int(_get("ROUTE_BUFFER_M", "120"))
 ORS_API_KEY = _get("ORS_API_KEY")
 OVERPASS_URL = _get("OVERPASS_URL", "https://overpass-api.de/api/interpreter")
 
-ANTHROPIC_API_KEY = _get("ANTHROPIC_API_KEY")
-ANTHROPIC_MODEL = _get("ANTHROPIC_MODEL", "claude-sonnet-5")
+# Overpass sits behind Apache/mod_security and returns 406 Not Acceptable to
+# requests without a descriptive User-Agent — before the query is even parsed,
+# so the error looks nothing like a query problem. Identifying the client is
+# also what the Overpass usage policy asks for.
+USER_AGENT = _get(
+    "USER_AGENT",
+    "ambient-ops/0.1 (FortyGuard Hackathon 26; https://github.com/moezalikhan/ambient-ops)",
+)
+
+# --- agent model ----------------------------------------------------------
+# Spec section 14.5: "whichever provides reliable tool-calling within budget".
+# Budget here is zero, so every preset below is a free tier. They all speak the
+# OpenAI chat-completions API, so switching provider is a base_url change.
+#
+#   groq       Llama 3.3 70B. Very fast (good for a live agent trace), solid
+#              tool-calling, free tier ~30 req/min. Default.
+#   gemini     Gemini 2.0 Flash via its OpenAI-compatible endpoint. Generous
+#              free tier, reliable function calling. Best fallback.
+#   cerebras   Very fast Llama, free tier.
+#   openrouter Free model variants (":free" suffix), rate limited.
+#   ollama     Fully local, no key, no network. Tool-calling on small models is
+#              weaker — a last resort if every hosted free tier is exhausted.
+LLM_PRESETS = {
+    "groq": {
+        "base_url": "https://api.groq.com/openai/v1",
+        "model": "llama-3.3-70b-versatile",
+        "key_env": "GROQ_API_KEY",
+    },
+    "gemini": {
+        "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
+        "model": "gemini-2.0-flash",
+        "key_env": "GEMINI_API_KEY",
+    },
+    "cerebras": {
+        "base_url": "https://api.cerebras.ai/v1",
+        "model": "llama-3.3-70b",
+        "key_env": "CEREBRAS_API_KEY",
+    },
+    "openrouter": {
+        "base_url": "https://openrouter.ai/api/v1",
+        "model": "meta-llama/llama-3.3-70b-instruct:free",
+        "key_env": "OPENROUTER_API_KEY",
+    },
+    "ollama": {
+        "base_url": "http://localhost:11434/v1",
+        "model": "llama3.1:8b",
+        "key_env": "OLLAMA_API_KEY",
+    },
+}
+
+LLM_PROVIDER = _get("LLM_PROVIDER", "groq")
+_preset = LLM_PRESETS.get(LLM_PROVIDER, LLM_PRESETS["groq"])
+
+LLM_BASE_URL = _get("LLM_BASE_URL", _preset["base_url"])
+LLM_MODEL = _get("LLM_MODEL", _preset["model"])
+# Provider-specific key, or a single LLM_API_KEY that overrides all of them.
+LLM_API_KEY = _get("LLM_API_KEY") or _get(_preset["key_env"]) or (
+    "ollama" if LLM_PROVIDER == "ollama" else ""
+)
 
 CACHE_DB_PATH = REPO_ROOT / _get("CACHE_DB_PATH", "data/ambient_ops.db")
 DEMO_ROUTES_PATH = DATA_DIR / "demo_routes.json"
@@ -80,6 +137,6 @@ def missing_keys() -> list[str]:
         missing.append("FORTYGUARD_API_KEY")
     if not ORS_API_KEY:
         missing.append("ORS_API_KEY")
-    if not ANTHROPIC_API_KEY:
-        missing.append("ANTHROPIC_API_KEY")
+    if not LLM_API_KEY:
+        missing.append(f"{_preset['key_env']} (agent model, provider={LLM_PROVIDER})")
     return missing

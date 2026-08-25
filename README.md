@@ -73,7 +73,7 @@ Requires Miniconda/Anaconda and Node 20+.
 
 ```bash
 # 1. Configure
-cp .env.example .env      # then fill in FORTYGUARD_API_KEY at minimum
+cp .env.example .env      # FORTYGUARD_API_KEY, ORS_API_KEY, GROQ_API_KEY
 
 # 2. Backend
 conda env create -f environment.yml     # creates the `ambient-ops` env
@@ -99,7 +99,7 @@ pytest backend/tests -q
 |---|---|---|
 | 1 | Repo, scaffold, CI, API contract | ✅ done |
 | 2 | FortyGuard service — submit, poll, cache, layer verification | ✅ done |
-| 3 | Routing, segmentation, OSM context | ⬜ |
+| 3 | Routing, segmentation, OSM context | ✅ done |
 | 4 | Scoring model, intervention rules | ⬜ |
 | 5 | Agent orchestrator, tools, endpoints | ⬜ |
 | 6 | Map, route colouring, segment panel | ⬜ |

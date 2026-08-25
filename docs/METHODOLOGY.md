@@ -141,6 +141,56 @@ last Tuesday, which is weather. Exceedance (how often a location exceeds the
 threshold) or persistence (how long it stays above it) tells you a location is
 *reliably* dangerous — which is what justifies spending public money.
 
+### 2.3 Measured on the real routes — three of four factors do not vary
+
+Run on the two selected Fresno routes, Aug 25. This is the most important
+result in this document and it changes the scoring model.
+
+| Route | Length | Segments | AOI grid spread | Within-route spread |
+|---|---|---|---|---|
+| A — bus stop to Heaton Elementary | 862 m | 17 | 1.279 h | **0.629 h** |
+| B — transit stop to DBH clinic | 780 m | 16 | **0.000 h** | **0.000 h** |
+
+Route B's entire area of interest returns 264.000 hours on all 87 tiles, with
+a standard deviation of exactly zero. This is not a sampling artefact —
+sampling resolves 13 distinct tiles on route A at 6–57 m from each midpoint.
+
+**FortyGuard's exceedance field varies at neighbourhood scale, not street
+scale.** Across a 4 km² transect the spread is 22.2 hours; across an 800 m
+route it is between 0.6 and 0.0. HEI therefore separates *routes* from each
+other, but cannot separate segments *within* a route.
+
+Taking the four factors as the spec defines them, on route B:
+
+| Factor | Varies within route? | Why |
+|---|---|---|
+| HEI | **No** — spread 0.000 | Grid is uniform at this scale |
+| DTF | **No** — constant by construction | Segments are equal length, so length/1.3 is identical for every one |
+| SVI | **No** — no data | OSM has 0 trees and 0 surface tags along the route |
+| PSI | Yes | Distance to school/clinic changes along the route |
+
+So the published ranking would be driven **entirely by proximity to the
+destination** — which is not a heat analysis. The map would still render, the
+scores would still differ, and nothing in the output would reveal it.
+
+**Two concrete consequences:**
+
+1. **Min-max normalisation divides by zero when spread is 0.** The scoring
+   implementation must handle a constant factor explicitly and say what it
+   does — returning a constant 0, or 0.5, or excluding the factor — rather
+   than producing a NaN or an accidental ordering.
+
+2. **DTF needs redefining or dropping.** With fixed-length segments,
+   "segment length / 1.3 m/s" is the same number for every segment. A
+   defensible alternative that matches the spec's stated intent ("longer
+   unbroken exposure is worse") is the length of the *continuous unshaded run*
+   a segment belongs to, not the segment's own length. That depends on SVI, so
+   it must be computed after it. Minqi's call.
+
+TODO — Minqi: decide the factor set and weights in light of the above, and
+record the reasoning here. The sliders make the weights debatable in public,
+which is the right place for this to be argued.
+
 ## 4. Segmentation
 
 Routes are split into fixed 50 m segments. TODO — justify 50 m: short enough to
