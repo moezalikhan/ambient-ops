@@ -68,8 +68,10 @@ USER_AGENT = _get(
 # Budget here is zero, so every preset below is a free tier. They all speak the
 # OpenAI chat-completions API, so switching provider is a base_url change.
 #
-#   groq       Llama 3.3 70B. Very fast (good for a live agent trace), solid
-#              tool-calling, free tier ~30 req/min. Default.
+#   groq       GPT-OSS 120B. Very fast (good for a live agent trace), verified
+#              tool-calling on 2026-08-25, free tier. Default.
+#              Verified alternative on the same key: qwen/qwen3.6-27b.
+#              NOT usable: groq/compound* — no tool-calling support.
 #   gemini     Gemini 2.0 Flash via its OpenAI-compatible endpoint. Generous
 #              free tier, reliable function calling. Best fallback.
 #   cerebras   Very fast Llama, free tier.
@@ -79,7 +81,7 @@ USER_AGENT = _get(
 LLM_PRESETS = {
     "groq": {
         "base_url": "https://api.groq.com/openai/v1",
-        "model": "llama-3.3-70b-versatile",
+        "model": "openai/gpt-oss-120b",
         "key_env": "GROQ_API_KEY",
     },
     "gemini": {

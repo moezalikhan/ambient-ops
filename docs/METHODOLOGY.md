@@ -204,9 +204,59 @@ HPS = 100 * (w1*HEI + w2*DTF + w3*SVI + w4*PSI)
 defaults: w1 = 0.40, w2 = 0.20, w3 = 0.20, w4 = 0.20
 ```
 
+### 5.0 Implemented deviations from the specification
+
+Three, all forced by section 2.3 and all visible in `backend/scoring/model.py`.
+They are deviations, not silent fixes, and each is reversible.
+
+**1. Constant factors resolve to a neutral 0.5 and are reported.** Route B's
+heat grid is literally constant, so min-max normalisation would divide by
+zero. A constant factor cannot rank anything; it now returns 0.5 for every
+segment and appears in `degenerate_factors`, which the interface surfaces
+rather than hides. On route B the published output states that HEI
+contributed nothing.
+
+**2. DTF is the continuous exposed run, not the segment's own length.**
+Segments are equal by construction, so `length / 1.3` is identical for all of
+them and ranks nothing. DTF is now the length of the unbroken exposed stretch
+a segment belongs to — a segment in a 254 m run of unshaded pavement scores
+far above an isolated one. This preserves the spec's stated intent ("longer
+unbroken exposure is worse than the same temperature crossed quickly") which
+the literal formula does not.
+
+**3. SVI is computed from imagery, not OSM tags.** OSM yields 0 trees and
+almost no surface tags on these routes; FortyGuard's satellite layer gives
+0–15.3% tree cover that varies per segment. Spec section 5 prefers imagery
+anyway. Both a continuous form (default) and the spec's discrete five-row
+table are implemented — the table collapses the measured 0–15% range into two
+or three buckets, discarding most of the only signal that varies. State in the
+final write-up which produced the published ranking.
+
+### 5.0.1 Result
+
+With those three changes, all four factors vary on route A and three of four
+on route B:
+
+| | Route A | Route B |
+|---|---|---|
+| Heat spread (raw) | 0.63 h | 0.00 h |
+| **HPS spread** | **48.4** | **25.8** |
+| Degenerate factors | none | HEI |
+| Segments with no intervention | 1 of 17 | 5 of 16 |
+
+The segments with no matching intervention are the best-shaded ones, where
+"nothing needed here" is the correct answer rather than a gap.
+
 ### 5.1 Weight justification
 
 TODO — one paragraph per weight. Why is HEI worth double the others?
+
+**This now needs revisiting rather than justifying as written.** HEI carries
+the heaviest weight (0.40) but cannot separate segments within a route — on
+route B it separates nothing at all. Either the weight drops, or HEI is
+reframed as a route-level severity multiplier rather than a segment-level
+factor. Both are defensible; the sliders make the choice arguable in public,
+which is where it belongs.
 
 ### 5.2 HEI — Heat Exposure Index (0–1)
 

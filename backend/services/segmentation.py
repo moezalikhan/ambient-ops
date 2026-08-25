@@ -161,3 +161,31 @@ def summarise(segments: list[dict[str, Any]]) -> dict[str, Any]:
         out["heat_max"] = max(values)
         out["heat_spread"] = round(max(values) - min(values), 3)
     return out
+
+
+def attach_landcover(
+    segments: list[dict[str, Any]], use_cache_only: bool = True
+) -> list[dict[str, Any]]:
+    """Attach FortyGuard satellite land-cover classes to each segment.
+
+    With use_cache_only=True (the default) this makes no network call and no
+    credit spend: segments without cached imagery simply carry no `landcover`,
+    and the scoring model falls back to OSM for them. Pre-fetch with
+    scripts/fetch_segmentation.py.
+    """
+    from backend.cache import store
+    from backend.services.fortyguard import (
+        SATELLITE_CACHE_MAX_AGE_S,
+        SATELLITE_NAMESPACE,
+        get_surface_segmentation,
+    )
+
+    out = []
+    for seg in segments:
+        mid = seg["midpoint"]
+        key = f"{mid['lat']:.6f},{mid['lon']:.6f}@80"
+        cached = store.get(SATELLITE_NAMESPACE, key, max_age_s=SATELLITE_CACHE_MAX_AGE_S)
+        if cached is None and not use_cache_only:
+            cached = get_surface_segmentation(mid["lat"], mid["lon"])
+        out.append({**seg, "landcover": (cached or {}).get("classes")})
+    return out
