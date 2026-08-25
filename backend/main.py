@@ -1,8 +1,8 @@
 """Ambient Ops API.
 
-Endpoint surface is fixed here (spec section 9) so the frontend can be built
-against it. Handlers that depend on later steps return 501 with the step that
-fills them in, rather than silently returning fake data.
+Endpoint surface is fixed by spec section 9. The agent orchestrator, not this
+module, decides how an analysis is performed — these handlers start a run and
+report on it.
 """
 
 import json
@@ -12,6 +12,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend import config
+from backend.agent import orchestrator
 from backend.cache import store
 from backend.models import AnalyzeRequest, Route, SimulateRequest
 
@@ -25,7 +26,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Ambient Ops",
     description="Heat-aware route prioritisation for urban planners",
-    version="0.1.0",
+    version="0.5.0",
     lifespan=lifespan,
 )
 
@@ -50,6 +51,9 @@ def health() -> dict:
     return {
         "status": "ok",
         "missing_keys": config.missing_keys(),
+        "agent_model": f"{config.LLM_PROVIDER}/{config.LLM_MODEL}",
+        "heat_layer": config.FORTYGUARD_ANALYTIC_TYPE,
+        "heat_threshold_c": config.HEAT_THRESHOLD_C,
         "cache": store.stats(),
     }
 
@@ -64,19 +68,53 @@ def list_routes() -> list[Route]:
 
 @app.post("/api/analyze")
 def analyze(req: AnalyzeRequest) -> dict:
-    raise _not_yet(5, "The agent orchestrator run")
+    """Start an agent run. Returns a run_id to poll.
+
+    Asynchronous because the agent's own tools are: a cold FortyGuard job takes
+    minutes. With a pre-cached route the run settles in seconds, which is what
+    the demo relies on (spec section 13).
+    """
+    routes = {r["id"] for r in json.loads(config.DEMO_ROUTES_PATH.read_text())["routes"]}
+    if req.route_id not in routes:
+        raise HTTPException(404, f"unknown route_id {req.route_id!r}. Have: {sorted(routes)}")
+    if config.missing_keys():
+        raise HTTPException(503, f"unconfigured: {', '.join(config.missing_keys())}")
+
+    weights = req.weights.normalised().model_dump()
+    run_id = orchestrator.start_run(req.route_id, weights)
+    return {"run_id": run_id, "status": "running", "poll": f"/api/analyze/{run_id}"}
 
 
 @app.get("/api/analyze/{run_id}")
 def analyze_result(run_id: str) -> dict:
-    raise _not_yet(5, "Analysis result polling")
+    """Poll a run. `status` is running, completed, or failed."""
+    run = orchestrator.get_run(run_id)
+    if run is None:
+        raise HTTPException(404, f"unknown run_id {run_id!r}")
+    return {
+        "run_id": run_id,
+        "status": run["status"],
+        "route_id": run["route_id"],
+        "model": run["model"],
+        "tool_calls_so_far": len(run["trace"]),
+        "error": run["error"],
+        "result": run["result"],
+    }
+
+
+@app.get("/api/agent-trace/{run_id}")
+def agent_trace(run_id: str) -> dict:
+    """The tool calls the agent made, in order.
+
+    Exists so the agent's reasoning can be shown during judging — spec section
+    9 says explicitly not to skip it.
+    """
+    trace = orchestrator.get_trace(run_id)
+    if trace is None:
+        raise HTTPException(404, f"unknown run_id {run_id!r}")
+    return trace
 
 
 @app.post("/api/simulate")
 def simulate(req: SimulateRequest) -> dict:
     raise _not_yet(7, "What-if intervention simulation")
-
-
-@app.get("/api/agent-trace/{run_id}")
-def agent_trace(run_id: str) -> dict:
-    raise _not_yet(5, "The agent tool-call trace")

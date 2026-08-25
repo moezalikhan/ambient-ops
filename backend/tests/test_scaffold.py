@@ -25,10 +25,25 @@ def test_demo_routes_load_and_validate():
 
 
 def test_unimplemented_endpoints_are_honest():
-    """Stubs must 501, not return fabricated data."""
-    assert client.post("/api/analyze", json={"route_id": "route_a"}).status_code == 501
-    assert client.get("/api/analyze/abc").status_code == 501
-    assert client.get("/api/agent-trace/abc").status_code == 501
+    """A stub must 501 rather than return fabricated data. Only simulate is
+    still a stub — the analyze and trace endpoints landed in Step 5."""
+    assert client.post("/api/simulate",
+                       json={"segment_id": "x", "intervention": "y"}).status_code == 501
+
+
+def test_analyze_is_implemented():
+    """503 (no keys, as in CI) or 200 (keys present) — anything but 501."""
+    r = client.post("/api/analyze", json={"route_id": "route_a"})
+    assert r.status_code in (200, 503), r.text
+
+
+def test_analyze_rejects_an_unknown_route():
+    assert client.post("/api/analyze", json={"route_id": "nope"}).status_code == 404
+
+
+def test_polling_an_unknown_run_is_404():
+    assert client.get("/api/analyze/deadbeef").status_code == 404
+    assert client.get("/api/agent-trace/deadbeef").status_code == 404
 
 
 def test_weights_normalise_to_one():

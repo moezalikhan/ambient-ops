@@ -181,9 +181,10 @@ def format_for_agent(segment: dict[str, Any]) -> dict[str, Any]:
         "rank": segment.get("rank"),
         "factors": {k: segment.get(k) for k in ("HEI", "DTF", "SVI", "PSI")},
         "evidence": {
-            "tree_pct": _tree(segment),
-            "building_pct": _building(segment),
-            "paved_pct": round(_paved(segment), 2),
+            "tree_percent_of_image": _tree(segment),
+            "building_percent_of_image": _building(segment),
+            "paved_percent_of_image": round(_paved(segment), 2),
+            "units_note": "Percentages are already in percent; 0.9 means 0.9%.",
             "exposed_run_m": _run_m(segment),
             "at_transit_stop": _at_transit(segment),
             "sheltered": _sheltered(segment),

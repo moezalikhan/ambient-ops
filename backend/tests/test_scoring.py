@@ -206,7 +206,8 @@ def test_agent_payload_carries_evidence_and_forbids_invention():
     seg = {**_seg(0, 260.0, transit=True), "SVI": 0.7, "HPS": 61.2, "rank": 1,
            "HEI": 1.0, "DTF": 0.5, "PSI": 0.7, "raw": {"exposed_run_m": 50.0}}
     payload = interventions.format_for_agent(seg)
-    assert payload["evidence"]["tree_pct"] == 5.0
+    assert payload["evidence"]["tree_percent_of_image"] == 5.0
+    assert "0.9%" in payload["evidence"]["units_note"]
     assert payload["factors"]["HEI"] == 1.0
     assert "Do not state any cooling figure" in payload["rules"]
     assert "inventing" in payload["rules"] or "say so" in payload["rules"]
