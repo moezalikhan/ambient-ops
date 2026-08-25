@@ -19,6 +19,11 @@ frontend/.vite/
 # Caches and generated data
 *.db
 *.sqlite3
+# ...except the pre-cached demo data. 564 KB, and without it a fresh clone or
+# a deploy starts cold: every route would trigger a live satellite pass,
+# roughly 20 minutes and 250,000 credits each. Committing it is what makes
+# "clone and run" actually work.
+!data/ambient_ops.db
 data/cached_grids/*
 !data/cached_grids/.gitkeep
 

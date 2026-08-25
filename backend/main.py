@@ -7,9 +7,12 @@ report on it.
 
 import json
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from backend import config
 from backend.agent import orchestrator
@@ -114,6 +117,21 @@ def agent_trace(run_id: str) -> dict:
     if trace is None:
         raise HTTPException(404, f"unknown run_id {run_id!r}")
     return trace
+
+
+# --- static interface -----------------------------------------------------
+# Serving the built frontend from the API makes this a single process on a
+# single origin: one URL to share through a tunnel, one service to deploy, and
+# no CORS. `npm run build` first; in development use the Vite dev server on
+# 5173 instead, which proxies /api here.
+_DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+
+if _DIST.is_dir():
+    app.mount("/assets", StaticFiles(directory=_DIST / "assets"), name="assets")
+
+    @app.get("/", include_in_schema=False)
+    def index() -> FileResponse:
+        return FileResponse(_DIST / "index.html")
 
 
 @app.post("/api/simulate")
