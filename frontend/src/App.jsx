@@ -3,6 +3,9 @@ import { analyze, getAnalysis, getHealth, getRoutes } from './api.js'
 import AgentTrace from './components/AgentTrace.jsx'
 import Map from './components/Map.jsx'
 import SegmentPanel from './components/SegmentPanel.jsx'
+import Simulate from './components/Simulate.jsx'
+import WeightSliders from './components/WeightSliders.jsx'
+import { DEFAULT_WEIGHTS, rescore } from './hps.js'
 
 const POLL_MS = 1500
 
@@ -32,6 +35,7 @@ export default function App() {
   const timer = useRef(null)
 
   const [theme, setTheme] = useTheme()
+  const [weights, setWeights] = useState({ ...DEFAULT_WEIGHTS })
 
   useEffect(() => {
     Promise.all([getRoutes(), getHealth()])
@@ -54,6 +58,7 @@ export default function App() {
     setElapsed(0)
 
     try {
+      setWeights({ ...DEFAULT_WEIGHTS })
       const { run_id } = await analyze(routeId)
       timer.current = setInterval(async () => {
         setElapsed(Math.round((Date.now() - startedAt) / 1000))
@@ -79,7 +84,24 @@ export default function App() {
     }
   }, [routeId])
 
-  const result = run?.status === 'completed' ? run.result : null
+  const base = run?.status === 'completed' ? run.result : null
+  // Re-rank in the browser as the sliders move: the factors come back
+  // normalised, so re-weighting is arithmetic and needs no server round trip.
+  const result = (() => {
+    if (!base) return null
+    const segments = rescore(base.segments, weights)
+    // Recompute the spread too — showing the server's original figure while
+    // the sliders move would quietly contradict the list beside it.
+    const scores = segments.map((s) => s.HPS)
+    return {
+      ...base,
+      segments,
+      hps_spread: scores.length
+        ? Math.round((Math.max(...scores) - Math.min(...scores)) * 100) / 100
+        : 0,
+    }
+  })()
+  const selected = result?.segments?.find((s) => s.id === selectedId)
   const missing = health?.missing_keys || []
 
   return (
@@ -155,10 +177,20 @@ export default function App() {
           )}
         </div>
         <aside>
+          <WeightSliders
+            weights={weights}
+            onChange={setWeights}
+            degenerate={result?.degenerate_factors || []}
+          />
           <SegmentPanel
             result={result}
             selectedId={selectedId}
             onSelect={setSelectedId}
+          />
+          <Simulate
+            runId={run?.run_id}
+            segment={selected}
+            disabled={!result || !selected}
           />
           <AgentTrace runId={run?.run_id} status={run?.status} />
         </aside>

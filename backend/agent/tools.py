@@ -21,6 +21,7 @@ from typing import Any
 from backend import config
 from backend.scoring import interventions as iv
 from backend.scoring import model
+from backend.scoring import simulate as sim
 from backend.services import fortyguard as fg
 from backend.services import osm, routing, segmentation
 
@@ -214,6 +215,19 @@ def _recommend_intervention(ctx: RunContext, segment_id: str) -> dict[str, Any]:
     return iv.format_for_agent(seg)
 
 
+def _simulate_intervention(ctx: RunContext, segment_id: str, intervention: str
+                           ) -> dict[str, Any]:
+    if not ctx.scored:
+        raise ToolError("call score_segments before simulate_intervention")
+    try:
+        return sim.simulate_intervention(
+            ctx.segments, segment_id, intervention,
+            weights=(ctx.scored or {}).get("weights"),
+        )
+    except sim.SimulationError as e:
+        raise ToolError(str(e)) from e
+
+
 TOOL_IMPLS = {
     "get_route": _get_route,
     "segment_route": _segment_route,
@@ -221,6 +235,7 @@ TOOL_IMPLS = {
     "get_segment_context": _get_segment_context,
     "score_segments": _score_segments,
     "recommend_intervention": _recommend_intervention,
+    "simulate_intervention": _simulate_intervention,
 }
 
 
@@ -337,6 +352,31 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
 ]
 
 
+TOOL_SCHEMAS.append({
+    "type": "function",
+    "function": {
+        "name": "simulate_intervention",
+        "description": (
+            "Apply an intervention to a segment and re-score the route. Returns "
+            "the before and after score, the change in rank, and whether the "
+            "modelled magnitude is sourced. Use the intervention id from "
+            "recommend_intervention's candidates."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "segment_id": {"type": "string"},
+                "intervention": {
+                    "type": "string",
+                    "description": "Intervention id, e.g. 'street_trees'.",
+                },
+            },
+            "required": ["segment_id", "intervention"],
+        },
+    },
+})
+
+
 def summarise_result(name: str, result: Any) -> str:
     """One line for the trace panel."""
     if not isinstance(result, dict):
@@ -359,4 +399,9 @@ def summarise_result(name: str, result: Any) -> str:
                 + (f"; constant: {','.join(deg)}" if deg else ""))
     if name == "recommend_intervention":
         return f"{len(result.get('candidates') or [])} candidate interventions"
+    if name == "simulate_intervention":
+        d = result.get("delta_HPS")
+        return (f"{result.get('intervention_label')}: HPS {d:+.2f}, "
+                f"rank {result.get('before', {}).get('rank')}"
+                f"->{result.get('after', {}).get('rank')}")
     return "ok"

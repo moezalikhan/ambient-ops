@@ -15,6 +15,7 @@ from backend import config
 from backend.agent import orchestrator
 from backend.cache import store
 from backend.models import AnalyzeRequest, Route, SimulateRequest
+from backend.scoring import simulate as sim
 
 
 @asynccontextmanager
@@ -117,4 +118,36 @@ def agent_trace(run_id: str) -> dict:
 
 @app.post("/api/simulate")
 def simulate(req: SimulateRequest) -> dict:
-    raise _not_yet(7, "What-if intervention simulation")
+    """Apply an intervention to a segment and re-score the route.
+
+    Costs nothing and touches no external API — it re-runs the scoring model
+    over the run's stored segments, so a planner can move through what-ifs at
+    interactive speed.
+    """
+    run = orchestrator.get_run(req.run_id)
+    if run is None:
+        raise HTTPException(404, f"unknown run_id {req.run_id!r}")
+    if run["status"] != "completed":
+        raise HTTPException(409, f"run {req.run_id} is {run['status']}")
+    if not run.get("segments"):
+        raise HTTPException(409, "this run produced no scored segments")
+
+    weights = req.weights.normalised().model_dump() if req.weights else run.get("weights")
+    try:
+        return sim.simulate_intervention(
+            run["segments"], req.segment_id, req.intervention, weights=weights
+        )
+    except sim.SimulationError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@app.get("/api/interventions")
+def interventions() -> dict:
+    """The intervention table, for the what-if picker in the interface."""
+    return {
+        "interventions": [
+            {"id": k, "label": v["label"], "assumption": v["assumption"],
+             "sourced": v["sourced"], "caveat": v["caveat"]}
+            for k, v in sim.EFFECTS.items()
+        ]
+    }

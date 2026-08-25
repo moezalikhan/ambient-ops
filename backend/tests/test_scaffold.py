@@ -24,11 +24,26 @@ def test_demo_routes_load_and_validate():
     assert {x["id"] for x in routes} == {"route_a", "route_b"}
 
 
-def test_unimplemented_endpoints_are_honest():
-    """A stub must 501 rather than return fabricated data. Only simulate is
-    still a stub — the analyze and trace endpoints landed in Step 5."""
-    assert client.post("/api/simulate",
-                       json={"segment_id": "x", "intervention": "y"}).status_code == 501
+def test_no_endpoint_is_a_stub_any_more():
+    """Every endpoint in spec section 9 now has a real handler."""
+    paths = {r.path for r in app.routes}
+    for p in ("/api/routes", "/api/analyze", "/api/analyze/{run_id}",
+              "/api/agent-trace/{run_id}", "/api/simulate"):
+        assert p in paths, p
+
+
+def test_simulate_rejects_an_unknown_run():
+    r = client.post("/api/simulate", json={
+        "run_id": "deadbeef", "segment_id": "x", "intervention": "street_trees"})
+    assert r.status_code == 404
+
+
+def test_interventions_are_listed_with_their_sourcing():
+    """The picker must be able to show which magnitudes are assumptions."""
+    body = client.get("/api/interventions").json()["interventions"]
+    assert len(body) >= 6
+    for i in body:
+        assert {"id", "label", "assumption", "sourced", "caveat"} <= set(i)
 
 
 def test_analyze_is_implemented():

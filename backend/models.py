@@ -87,8 +87,13 @@ class AnalyzeRequest(BaseModel):
 
 
 class SimulateRequest(BaseModel):
+    """Spec section 8 names (segment_id, intervention); run_id is added because
+    a segment id only means something inside the run that produced it."""
+
+    run_id: str
     segment_id: str
     intervention: str
+    weights: Weights | None = None
 
 
 class ToolCall(BaseModel):

@@ -47,3 +47,30 @@ export const FACTOR_LABELS = {
   SVI: "Surface Vulnerability",
   PSI: "Population Sensitivity",
 };
+
+
+export const DEFAULT_WEIGHTS = { HEI: 0.40, DTF: 0.20, SVI: 0.20, PSI: 0.20 }
+
+/** Re-score client-side.
+ *
+ *  The four factors come back already normalised 0-1, so re-weighting is pure
+ *  arithmetic — no server call, no API cost, no latency. That is what lets a
+ *  slider re-rank the route as it is dragged, which is the point of exposing
+ *  the weights at all (spec section 6).
+ */
+export function rescore(segments, weights) {
+  const total = Object.values(weights).reduce((a, b) => a + b, 0)
+  if (!segments?.length || total <= 0) return segments || []
+  const w = Object.fromEntries(
+    Object.entries(weights).map(([k, v]) => [k, v / total]),
+  )
+  const scored = segments.map((s) => ({
+    ...s,
+    HPS: Math.round(
+      100 * (w.HEI * s.HEI + w.DTF * s.DTF + w.SVI * s.SVI + w.PSI * s.PSI) * 100,
+    ) / 100,
+  }))
+  return scored
+    .sort((a, b) => b.HPS - a.HPS)
+    .map((s, i) => ({ ...s, rank: i + 1 }))
+}

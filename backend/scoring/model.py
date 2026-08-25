@@ -205,6 +205,14 @@ def score_segments(
             trees = (ctx.get("canopy") or {}).get("tree_count", 0)
             raw_svi.append(0.5 if trees else 1.0)
 
+    # A simulated intervention may act on SVI directly (a reflective coating
+    # changes the surface, not the land-cover classes). Applied after the
+    # normal derivation so the base calculation stays untouched.
+    raw_svi = [
+        max(0.0, min(1.0, v + (s.get("_svi_delta") or 0.0)))
+        for v, s in zip(raw_svi, segments, strict=True)
+    ]
+
     raw_dtf = [r / WALKING_SPEED_MPS for r in exposed_runs(raw_svi, lengths)]
     raw_psi = [psi_from_context(c) for c in contexts]
 

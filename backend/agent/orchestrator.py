@@ -147,6 +147,10 @@ def _run_loop(run_id: str, route_id: str, weights: dict | None) -> None:
 
         with _LOCK:
             run["status"] = "completed"
+            # Kept for /api/simulate: re-scoring a what-if needs the segments
+            # with their context and land cover, not just the scored output.
+            run["segments"] = ctx.segments
+            run["weights"] = (ctx.scored or {}).get("weights")
             run["result"] = _final_result(ctx, run.get("answer", ""))
             run["finished_at"] = time.time()
 
@@ -195,6 +199,8 @@ def start_run(route_id: str, weights: dict | None = None) -> str:
         "result": None,
         "error": None,
         "answer": "",
+        "segments": [],
+        "weights": None,
         "started_at": time.time(),
         "finished_at": None,
         "model": f"{config.LLM_PROVIDER}/{config.LLM_MODEL}",

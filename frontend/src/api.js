@@ -15,10 +15,13 @@ async function req(path, options) {
 export const getHealth = () => req('/health')
 export const getRoutes = () => req('/routes')
 
-// Steps 5 and 7 — the backend returns 501 until then.
 export const analyze = (route_id, weights) =>
   req('/analyze', { method: 'POST', body: JSON.stringify({ route_id, weights }) })
 export const getAnalysis = (runId) => req(`/analyze/${runId}`)
 export const getAgentTrace = (runId) => req(`/agent-trace/${runId}`)
-export const simulate = (segment_id, intervention) =>
-  req('/simulate', { method: 'POST', body: JSON.stringify({ segment_id, intervention }) })
+export const getInterventions = () => req('/interventions')
+export const simulate = (run_id, segment_id, intervention) =>
+  req('/simulate', {
+    method: 'POST',
+    body: JSON.stringify({ run_id, segment_id, intervention }),
+  })
