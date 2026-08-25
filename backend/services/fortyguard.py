@@ -184,12 +184,19 @@ def poll_status(
     client = client or httpx.Client(timeout=60.0)
     deadline = time.monotonic() + timeout_s
     attempt = 0
+    # A just-submitted activity can 404 briefly before it is queryable. Two
+    # satellite fetches were lost to this. Tolerate it early, but not forever —
+    # a persistent 404 is a real failure.
+    grace_attempts = 5
     try:
         while True:
             attempt += 1
             resp = client.get(
                 f"{config.FORTYGUARD_BASE_URL}/status/{activity_id}", headers=_headers()
             )
+            if resp.status_code == 404 and attempt <= grace_attempts:
+                time.sleep(interval_s)
+                continue
             body = _raise_for_response(resp, "status poll")
             data = body.get("data") or {}
             status = str(data.get("status", "")).lower()
