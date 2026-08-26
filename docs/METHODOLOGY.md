@@ -31,9 +31,22 @@
 
 What temperature counts as dangerous for a pedestrian, and on whose authority.
 
-- **Threshold:** TODO °C at 2 m above ground
-- **Source:** TODO — needs a citation, not a round number
-- **Rationale:** TODO
+- **Threshold:** 35 °C dry-bulb air temperature at 2 m above ground, used as an
+  operational threshold for FortyGuard exceedance.
+- **Source:** A 2026 pedestrian thermal-comfort study uses daily maximum air
+  temperature at or above 35 °C for at least three consecutive days to define
+  extreme-heat walking-route conditions.
+  Separately,
+  epidemiological threshold studies show that heat-health thresholds vary by
+  place and outcome; one warm-season mortality study found a 35 °C daily-maximum
+  threshold for respiratory deaths
+  ([Chen et al., 2017](https://www.sciencedirect.com/science/article/pii/S001393511631221X)).
+- **Rationale:** Ambient Ops uses 35 °C dry-bulb exceedance as an operational
+  way to count repeated dangerous-heat exposure. The threshold is high enough to
+  represent serious pedestrian heat, simple enough to audit, and usable with the
+  FortyGuard exceedance API. It is not a claim that every person becomes unsafe
+  at exactly 35 °C, and it should be recalibrated for deployments with local
+  heat-health trigger data.
 
 > **The threshold is not a free parameter.** HEI is derived from an exceedance
 > count and then normalised *within the route*. If the threshold sits outside
