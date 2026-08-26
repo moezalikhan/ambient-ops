@@ -279,7 +279,44 @@ The segments with no matching intervention are the best-shaded ones, where
 
 ### 5.1 Weight justification
 
-TODO — one paragraph per weight. Why is HEI worth double the others?
+### 5.1 Weight justification
+
+The default weights are a transparent starting position, not an empirically
+optimised coefficient set.
+
+**HEI = 0.40.** Heat exposure is the primary hazard the project is built around,
+so it receives the largest starting weight. WHO identifies heat as a major
+environmental and occupational health hazard and notes that health impacts
+depend on exposure intensity, duration, timing, vulnerability, and local
+adaptation. HEI is therefore the anchor factor: it measures accumulated
+dangerous-heat exposure before the model adds walking exposure, street
+vulnerability, and sensitive-destination context. However, HEI is allowed to
+matter only when it varies within the route. If the heat layer is constant, the
+model marks HEI as degenerate and the agent must not cite it as the reason one
+segment outranks another.
+
+**DTF = 0.20.** Exposure duration matters because the same heat condition is
+more consequential when a pedestrian remains in an unshaded run for longer.
+DTF therefore captures walking-exposure continuity rather than duplicating the
+fixed segment length.
+
+**SVI = 0.20.** Surface vulnerability represents the built environment: canopy,
+shelter, paved surface, building shade, and nearby green or water context.
+Pedestrian-thermal-comfort reviews consistently identify shade, vegetation, and
+street geometry as major determinants of outdoor comfort.
+Route-scale field measurements using 360-degree street view factors also find
+that building exposure is a dominant warming contributor, while tree and
+grass-shrub view factors provide consistent cooling during extreme-heat walking
+conditions.
+
+**PSI = 0.20.** Population sensitivity is an equity and use-context proxy. It
+does not measure heat physics; it asks whether the segment is near a school,
+clinic, hospital, elderly facility, or transit stop, where walking may be more
+necessary or where exposed people may be more sensitive.
+
+These weights should be tested with sensitivity analysis. A stable top segment
+across weight scenarios can be described as robust; a changing top segment is a
+policy-sensitive decision, not a model failure.
 
 **This now needs revisiting rather than justifying as written.** HEI carries
 the heaviest weight (0.40) but cannot separate segments within a route — on
