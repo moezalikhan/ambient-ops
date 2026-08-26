@@ -86,9 +86,7 @@ spread is small relative to the model's own uncertainty, min-max normalisation
 manufactures false precision.** State the observed within-route spread in this
 document alongside the ranking, so a reader can judge that for themselves.
 
-TODO — obtain FortyGuard's stated model uncertainty, if published. Without it,
-the amplification concern cannot be quantified and should be named as an
-open limitation rather than glossed.
+LARGE TEMPERATURE MODELS (LTMs)'outputs are probabilistic — each value is paired with its uncertainty, which downstream stages carry through analytics and insights rather than drop at the model boundary.
 
 ### 2.2 Why the window is 30 days, not one day
 
