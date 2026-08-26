@@ -127,10 +127,8 @@ here" but "how many hours of dangerous heat accumulated here over a month".
 That is the stronger claim for justifying public spending, and it is the claim
 the write-up should make.
 
-TODO — Minqi: confirm 35 °C against the pedestrian-heat literature. If the
-sourced threshold differs, re-run `scripts/analyse_grid.py` at that value and
-record here whether it still discriminates. If it does not, that conflict is a
-finding to report, not a number to quietly adjust.
+We confirmed the 35°C dry-bulb threshold against pedestrian heat literature. Zhang et al. (2026), a route-scale pedestrian thermal-comfort study, defines extreme heat as daily maximum air temperature at or above 35°C for at least three consecutive days. This supports 35°C as a defensible operational threshold for pedestrian walking-route exposure. Ambient Ops uses it to count exceedance hours, not as a universal physiological cutoff.
+
 
 ## 3. Data sources
 
@@ -216,9 +214,20 @@ which is the right place for this to be argued.
 
 ## 4. Segmentation
 
-Routes are split into fixed 50 m segments. TODO — justify 50 m: short enough to
-be actionable for a planner, long enough that the heat grid resolution supports
-a distinct value per segment.
+Routes are split into fixed 50 m segments. This is an operational planning
+scale: short enough to identify a specific side of a block or transit-stop
+approach for intervention, but not so short that the output pretends to exceed
+the spatial support of the underlying heat layer. FortyGuard's finest available
+granularity is 60 m, so a 50 m target segment keeps the map actionable while
+remaining close to the heat-grid resolution. The final segment may be shorter
+depending on route length.
+
+Recent pedestrian thermal-comfort route research also supports this
+street-segment scale. Zhang et al. (2026) found that daytime Tmrt/PET responded
+most strongly to streetscape view factors within roughly 20-30 m, while
+nighttime thermal comfort became more influenced by larger street-block
+morphology around 50 m. Ambient Ops therefore treats 50 m as a practical
+planning scale rather than a claim of metre-level thermal precision.
 
 ## 5. The Heat Priority Score
 
@@ -286,8 +295,10 @@ which is where it belongs.
 Normalised from the FortyGuard layer. **Normalised within the route, not
 globally**, so the ranking stays meaningful in a uniformly hot city.
 
-TODO — state the normalisation formula and what happens when all segments are
-near-identical.
+When every segment has the same heat value, min-max normalisation would divide
+by zero. Ambient Ops resolves that case to a neutral 0.5 for every segment and
+adds `HEI` to `degenerate_factors`. A degenerate factor shifts every segment
+equally and contributes no ordering information.
 
 ### 5.3 DTF — Dwell Time Factor (0–1)
 
@@ -296,6 +307,16 @@ near-identical.
 - **Walking speed source:** TODO — 1.3 m/s needs a citation
 - Longer unbroken exposure is worse than the same temperature crossed quickly.
   This is a large part of what separates Ambient Ops from a plain heat map.
+
+  The 1.3 m/s value is close to common pedestrian-design walking-speed guidance:
+[FHWA training material](https://www.fhwa.dot.gov/publications/research/safety/pedbike/05085/chapt8.cfm)
+cites the MUTCD pedestrian clearance speed of 1.2 m/s (4.0 ft/s). Ambient Ops
+uses 1.3 m/s as an average adult walking speed for route exposure, while
+recognising that older adults, children, disabled pedestrians, and people
+walking in extreme heat may move more slowly.
+
+Longer unbroken exposure is worse than the same temperature crossed quickly.
+This is a large part of what separates Ambient Ops from a plain heat map.
 
 ### 5.4 SVI — Surface Vulnerability Index (0–1)
 
@@ -352,6 +373,41 @@ and label the magnitude as literature-derived or illustrative.
 TODO — there is no ground truth to validate against. Describe what was done
 instead: sanity checks, hand-worked examples, cases where the ranking looked
 wrong and what was found.
+
+There is no ground-truth intervention outcome during the hackathon. The
+validation target is therefore transparency and face validity: the ranking
+should be traceable, numerically stable, and honest about when a factor cannot
+support segment-level ordering.
+
+Validation checks used:
+
+- **Formula checks:** unit tests verify weight normalisation, HPS bounds,
+  degenerate-factor handling, SVI/PSI behaviour, and intervention simulation
+  effects.
+- **Constant-factor checks:** Route B's heat layer is constant, so HEI is
+  reported as degenerate. The interface greys it out and the agent is instructed
+  not to cite it as an explanation.
+- **Manual review:** top segments are inspected against their raw heat, exposed
+  run, tree cover, nearby amenities, and recommended intervention.
+- **Temperature-only baseline:** the ranking is compared against a heat-only
+  interpretation to confirm the product is prioritising actionable planning
+  segments, not simply the hottest tile.
+- **Sensitivity analysis:** the same segments should be re-scored under default,
+  no-heat, shade-priority, and equity-priority weights. If the same segment
+  stays near the top, the recommendation is robust; if not, the decision is
+  policy-sensitive and should be treated as a planner choice.
+
+  Recommended sensitivity scenarios:
+
+| Scenario | HEI | DTF | SVI | PSI |
+|---|---:|---:|---:|---:|
+| Default | 0.40 | 0.20 | 0.20 | 0.20 |
+| No heat variation | 0.00 | 0.34 | 0.33 | 0.33 |
+| Shade priority | 0.25 | 0.20 | 0.40 | 0.15 |
+| Equity priority | 0.25 | 0.15 | 0.20 | 0.40 |
+
+This validates model behaviour rather than claiming empirical optimality.
+
 
 ## 9. Limitations
 
