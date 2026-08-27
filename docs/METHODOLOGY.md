@@ -218,6 +218,16 @@ TODO — Minqi: decide the factor set and weights in light of the above, and
 record the reasoning here. The sliders make the weights debatable in public,
 which is the right place for this to be argued.
 
+The implemented factor set keeps HEI, DTF, SVI, and PSI, but updates how they are interpreted after testing them on the real routes.
+
+First, any factor that is constant across a route is marked as degenerate. A degenerate factor cannot explain why one segment ranks above another, so it is surfaced in the API and interface rather than hidden.
+
+Second, DTF is redefined as continuous unshaded exposure instead of single-segment walking time. Since most segments are roughly 50 m, using only `segment_length / walking_speed` would give nearly the same value for every segment. Continuous exposed run length better matches the intended question: how long is a pedestrian stuck in heat without relief?
+
+Third, SVI uses satellite land-cover data where available, because OSM tree and surface tags are sparse on the demo routes. Satellite segmentation provides varying tree, grass, pavement, and building context, while OSM remains useful for amenities, transit, shelter, water, and park context.
+
+The default weights are retained as transparent planning assumptions, not empirically optimized coefficients. HEI keeps the largest starting weight because heat exposure is the core hazard, while DTF, SVI, and PSI capture exposure duration, built-environment vulnerability, and sensitive-destination context. Sensitivity analysis should be used to show whether the top-ranked segment is robust or policy-sensitive under alternative weight settings.
+
 ## 4. Segmentation
 
 Routes are split into fixed 50 m segments. This is an operational planning
