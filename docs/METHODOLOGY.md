@@ -23,9 +23,17 @@
     Islander / Latino Team clinic, 780 m, 16 segments.
 - **Why these routes:** non-discretionary journeys — walked by people with the
   least ability to choose an alternative.
-- **Route selection evidence:** TODO — CalEnviroScreen is a real state dataset
-  identifying disadvantaged communities. Using it to justify *why these two
-  routes* is stronger than picking them by eye.
+- **Route selection evidence:** CalEnviroScreen](https://oehha.ca.gov/calenviroscreen?page=1)
+  is an official OEHHA screening
+  tool that ranks California census tracts using pollution burden,
+  environmental conditions, socioeconomic factors, and health indicators, and is
+  used by CalEPA to identify communities facing combined pollution and
+  socioeconomic disadvantage, as described in the
+  [CalEnviroScreen FAQs](https://oehha.ca.gov/calenviroscreen/calenviroscreen-faqs).
+  For the MVP, the routes are not claimed to be the only vulnerable corridors in
+  Fresno; they are fixed representative routes connecting transit to essential
+  destinations, selected from OSM candidates so the demo tests a repeatable
+  route-finding process rather than a hand-picked map view.
 
 ## 2. Heat threshold
 
