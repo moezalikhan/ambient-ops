@@ -48,11 +48,16 @@ Check `http://localhost:8000/api/health` first — `missing_keys` must be empty.
 clinic. Say why these: non-discretionary journeys, walked by people least able
 to choose an alternative.
 
-**2. Run analysis, and talk over the trace.** The trace panel fills in as the
-agent works. The point to make: nothing in the code sequences this. The agent
-chose to call `get_route`, then `segment_route`, then `get_heat_grid`, then
-`score_segments`, then `recommend_intervention`. Durations near zero are cache
-hits — the wall-clock time is the model deciding what to call next.
+**2. Run analysis.** The tool-call count ticks up beside the button while it
+works. The point to make: nothing in the code sequences this — the agent chose
+to call `get_route`, then `segment_route`, then `get_heat_grid`, then
+`score_segments`, then `recommend_intervention`.
+
+The full trace is on the last page of the evidence report, with arguments,
+durations and cache hits. It is also live at
+`/api/agent-trace/{run_id}` if a judge wants to watch it during the run —
+worth having that tab open, since the agentic claim is the whole basis for
+Track 06 and the report is read after the fact rather than during.
 
 **3. The ranked output.** Seventeen segments, coloured on the map, ranked in
 the panel. Click the top one; the map highlights it.
@@ -68,7 +73,7 @@ Simulate. Score drops 68.3 to 39.7, rank 1 to 9. Then read the line underneath
 out loud: **magnitude sourced — no, illustrative**, and the trade-off, that
 trees deliver nothing for about a decade.
 
-**6. Download the evidence report.** One click, a JSON file. It carries every
+**6. Download the evidence report.** One click, a PDF. It carries every
 factor value, every raw measurement, the weights, the degenerate factors, the
 data provenance, the intervention assumptions with their sourcing flags — and
 a sensitivity analysis that zeroes and doubles each weight in turn and reports

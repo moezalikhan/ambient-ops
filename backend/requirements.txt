@@ -10,6 +10,10 @@ pydantic>=2.11
 # swap rather than a code change. No paid provider is required.
 openai>=1.109
 
+# Evidence report rendering. Pure Python — no cairo/pango system libraries,
+# so it installs the same way on a laptop and in a container.
+reportlab>=4.2
+
 # Dev
 pytest>=8.4
 pytest-asyncio>=1.1

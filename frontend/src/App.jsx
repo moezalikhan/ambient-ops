@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { analyze, getAnalysis, getHealth, getRoutes } from './api.js'
-import AgentTrace from './components/AgentTrace.jsx'
 import Map from './components/Map.jsx'
 import SegmentPanel from './components/SegmentPanel.jsx'
 import Simulate from './components/Simulate.jsx'
@@ -169,8 +168,16 @@ export default function App() {
             {/* Served with Content-Disposition: attachment, so a plain link
                 downloads it. The evidence belongs in a file you can attach to
                 a decision, not crammed into the panel. */}
+            {/* PDF by default; ?format=json for the machine-readable form.
+                The agent's tool calls live in here now rather than in a
+                panel — the endpoint /api/agent-trace/{run_id} still serves
+                them live, which spec section 9 requires. */}
             <a className="report-link" href={`/api/report/${run.run_id}`}>
-              Download evidence report
+              Download evidence report (PDF)
+            </a>
+            <a className="report-link subtle"
+               href={`/api/report/${run.run_id}?format=json`}>
+              JSON
             </a>
           </>
         )}
@@ -202,7 +209,6 @@ export default function App() {
             segment={selected}
             disabled={!result || !selected}
           />
-          <AgentTrace runId={run?.run_id} status={run?.status} />
         </aside>
       </main>
     </div>

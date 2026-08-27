@@ -172,17 +172,19 @@ def test_report_endpoint_downloads_by_default(monkeypatch):
     r = client.get("/api/report/testrun0001")
     assert r.status_code == 200
     assert "attachment" in r.headers["content-disposition"]
-    assert ".json" in r.headers["content-disposition"]
-    assert r.json()["run"]["run_id"] == "testrun0001"
+    assert ".pdf" in r.headers["content-disposition"]
 
 
 def test_report_endpoint_can_render_inline(monkeypatch):
+    """download=false is for viewing in a browser tab rather than saving."""
     from backend.agent import orchestrator
     run = _run([_seg(i, 260.0 + i) for i in range(3)])
     monkeypatch.setattr(orchestrator, "get_run", lambda rid: run)
 
-    r = client.get("/api/report/testrun0001?download=false")
-    assert "content-disposition" not in r.headers
+    assert "inline" in client.get(
+        "/api/report/testrun0001?download=false").headers["content-disposition"]
+    assert "content-disposition" not in client.get(
+        "/api/report/testrun0001?format=json&download=false").headers
 
 
 def test_report_endpoint_refuses_an_unfinished_run(monkeypatch):
@@ -199,3 +201,62 @@ def test_report_survives_a_sparse_run(missing, monkeypatch):
     run[missing] = [] if missing == "segments" else {}
     body = reporting.build_report(run)
     assert body["run"]["run_id"] == "testrun0001"
+
+
+# --- PDF ------------------------------------------------------------------
+
+def test_pdf_renders_from_the_same_dict_as_the_json():
+    """One is a rendering of the other, so they cannot disagree."""
+    from backend import report_pdf
+    body = reporting.build_report(_run([_seg(i, 260.0 + i) for i in range(4)]))
+    pdf = report_pdf.render_pdf(body)
+    assert pdf[:5] == b"%PDF-"
+    assert len(pdf) > 4000
+
+
+def test_pdf_survives_a_degenerate_route():
+    from backend import report_pdf
+    body = reporting.build_report(_run([_seg(i, 264.0) for i in range(4)]))
+    assert report_pdf.render_pdf(body)[:5] == b"%PDF-"
+
+
+def test_pdf_survives_a_single_segment_route():
+    """One segment means no margin-to-second and no meaningful perturbation."""
+    from backend import report_pdf
+    assert report_pdf.render_pdf(
+        reporting.build_report(_run([_seg(0, 260.0)])))[:5] == b"%PDF-"
+
+
+def test_pdf_endpoint_is_the_default(monkeypatch):
+    from backend.agent import orchestrator
+    run = _run([_seg(i, 260.0 + i) for i in range(3)])
+    monkeypatch.setattr(orchestrator, "get_run", lambda rid: run)
+
+    r = client.get("/api/report/testrun0001")
+    assert r.status_code == 200
+    assert r.headers["content-type"] == "application/pdf"
+    assert ".pdf" in r.headers["content-disposition"]
+    assert r.content[:5] == b"%PDF-"
+
+
+def test_json_is_still_available(monkeypatch):
+    from backend.agent import orchestrator
+    run = _run([_seg(i, 260.0 + i) for i in range(3)])
+    monkeypatch.setattr(orchestrator, "get_run", lambda rid: run)
+
+    r = client.get("/api/report/testrun0001?format=json")
+    assert r.json()["run"]["run_id"] == "testrun0001"
+    assert ".json" in r.headers["content-disposition"]
+
+
+def test_unknown_format_is_rejected(monkeypatch):
+    from backend.agent import orchestrator
+    monkeypatch.setattr(orchestrator, "get_run",
+                        lambda rid: _run([_seg(0, 260.0)]))
+    assert client.get("/api/report/x?format=csv").status_code == 400
+
+
+def test_the_trace_endpoint_still_exists():
+    """The trace moved out of the interface panel, but spec section 9 requires
+    the endpoint itself — it is how the agent's reasoning is shown live."""
+    assert "/api/agent-trace/{run_id}" in {r.path for r in app.routes}

@@ -11,10 +11,10 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
-from backend import config
+from backend import config, report_pdf
 from backend import report as reporting
 from backend.agent import orchestrator
 from backend.cache import store
@@ -121,7 +121,7 @@ def agent_trace(run_id: str) -> dict:
 
 
 @app.get("/api/report/{run_id}")
-def report(run_id: str, download: bool = True) -> JSONResponse:
+def report(run_id: str, format: str = "pdf", download: bool = True):
     """The full evidence record behind a ranking.
 
     A ranked list is a claim; this is the working behind it — every factor
@@ -138,13 +138,23 @@ def report(run_id: str, download: bool = True) -> JSONResponse:
     if run["status"] != "completed":
         raise HTTPException(409, f"run {run_id} is {run['status']}")
 
+    if format not in ("pdf", "json"):
+        raise HTTPException(400, "format must be 'pdf' or 'json'")
+
     body = reporting.build_report(run)
-    headers = (
-        {"Content-Disposition":
-         f'attachment; filename="ambient-ops-{run["route_id"]}-{run_id}.json"'}
-        if download else {}
+    stem = f'ambient-ops-{run["route_id"]}-{run_id}'
+    disposition = "attachment" if download else "inline"
+
+    if format == "json":
+        headers = ({"Content-Disposition": f'{disposition}; filename="{stem}.json"'}
+                   if download else {})
+        return JSONResponse(content=body, headers=headers)
+
+    return Response(
+        content=report_pdf.render_pdf(body),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'{disposition}; filename="{stem}.pdf"'},
     )
-    return JSONResponse(content=body, headers=headers)
 
 
 # --- static interface -----------------------------------------------------

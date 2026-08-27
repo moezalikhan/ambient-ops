@@ -117,7 +117,7 @@ runbook is [docs/DEMO.md](docs/DEMO.md).
 | `GET /api/agent-trace/{run_id}` | Tool calls in order, with durations |
 | `POST /api/simulate` | Apply an intervention, re-score |
 | `GET /api/interventions` | The rules table, with sourcing flags |
-| `GET /api/report/{run_id}` | Downloadable evidence record incl. sensitivity |
+| `GET /api/report/{run_id}` | Evidence record as PDF; `?format=json` for the data |
 
 ## Scripts
 

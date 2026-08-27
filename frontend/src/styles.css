@@ -472,3 +472,4 @@ ol.trace .summary { font-size: 0.74rem; color: var(--text-secondary); margin-top
   padding: 6px 11px;
 }
 .report-link:hover { border-color: var(--accent); }
+.report-link.subtle { color: var(--text-secondary); }
