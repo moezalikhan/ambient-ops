@@ -463,13 +463,27 @@ ol.trace .summary { font-size: 0.74rem; color: var(--text-secondary); margin-top
   :root:not([data-theme="light"]) .sim-result .chg.good { color: #0ca30c; }
 }
 
+/* The report is the deliverable a planner keeps, so it gets a primary
+   control. JSON stays available beside it as a quiet secondary. */
+.report-btn {
+  font-size: 0.82rem;
+  font-weight: 550;
+  color: #fff;
+  background: var(--accent);
+  text-decoration: none;
+  border-radius: 8px;
+  padding: 9px 16px;
+  white-space: nowrap;
+}
+.report-btn:hover { filter: brightness(1.08); }
+
 .report-link {
-  font-size: 0.8rem;
-  color: var(--accent);
+  font-size: 0.78rem;
+  color: var(--text-secondary);
   text-decoration: none;
   border: 1px solid var(--border);
   border-radius: 7px;
-  padding: 6px 11px;
+  padding: 7px 10px;
 }
-.report-link:hover { border-color: var(--accent); }
+.report-link:hover { color: var(--text-primary); border-color: var(--axis); }
 .report-link.subtle { color: var(--text-secondary); }

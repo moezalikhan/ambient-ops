@@ -172,11 +172,12 @@ export default function App() {
                 The agent's tool calls live in here now rather than in a
                 panel — the endpoint /api/agent-trace/{run_id} still serves
                 them live, which spec section 9 requires. */}
-            <a className="report-link" href={`/api/report/${run.run_id}`}>
-              Download evidence report (PDF)
+            <a className="report-btn" href={`/api/report/${run.run_id}`}>
+              Download report (PDF)
             </a>
             <a className="report-link subtle"
-               href={`/api/report/${run.run_id}?format=json`}>
+               href={`/api/report/${run.run_id}?format=json`}
+               title="Same evidence, machine-readable">
               JSON
             </a>
           </>
