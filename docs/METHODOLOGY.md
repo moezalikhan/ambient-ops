@@ -371,8 +371,18 @@ This is a large part of what separates Ambient Ops from a plain heat map.
 | Continuous tree canopy | 0.2 |
 | Adjacent to water or park | 0.1 |
 
-TODO — define the exact OSM tag combinations that map to each row, and what
-happens when tags are absent (missing data is not the same as bare asphalt).
+The implemented score uses FortyGuard satellite land-cover percentages where
+available, rather than relying only on OSM tags. OSM is still used for shelter,
+amenities, transit proximity, and water/park context. If imagery is unavailable,
+SVI falls back to OSM canopy context: segments with observed trees receive a
+moderate value, while segments with no tree signal receive a conservative high
+vulnerability value. Missing data is therefore handled as a data-quality caveat,
+not as proof that bare asphalt is present.
+
+For comparison and auditability, the five-row table remains the discrete
+interpretation of the factor. The published ranking uses the continuous
+satellite-derived SVI because measured canopy on these routes varies only from
+0.0% to 15.3%, and the discrete table would discard much of that limited signal.
 
 ### 5.5 PSI — Population Sensitivity Index (0–1)
 
