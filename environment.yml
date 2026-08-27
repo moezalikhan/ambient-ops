@@ -10,4 +10,4 @@ dependencies:
   - python=3.12
   - pip
   - pip:
-      - -r backend/requirements.txt
+      - -r requirements.txt

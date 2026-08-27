@@ -1,3 +1,27 @@
-# Railway's builder looks for requirements.txt at the repo root; the real list
-# lives with the backend it belongs to.
--r backend/requirements.txt
+# Single source of truth for backend dependencies.
+#
+# It lives at the repo root because container builders copy only this file
+# into the image before running pip, to keep the dependency layer cacheable.
+# An include such as `-r backend/requirements.txt` therefore fails: the rest
+# of the repo is not there yet when pip runs.
+
+fastapi>=0.118
+uvicorn[standard]>=0.37
+httpx>=0.28
+python-dotenv>=1.1
+pydantic>=2.11
+
+# Agent loop (Step 5). The `openai` package is used purely as an
+# OpenAI-compatible HTTP client — Groq, Gemini, Cerebras, OpenRouter, Mistral
+# and Ollama all expose that same interface, so the provider is a base_url
+# swap rather than a code change. No paid provider is required.
+openai>=1.109
+
+# Evidence report rendering. Pure Python — no cairo/pango system libraries,
+# so it installs the same way on a laptop and in a container.
+reportlab>=4.2
+
+# Dev
+pytest>=8.4
+pytest-asyncio>=1.1
+ruff>=0.13
