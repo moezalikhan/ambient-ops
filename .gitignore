@@ -13,8 +13,10 @@ venv/
 
 # Node
 node_modules/
-frontend/dist/
 frontend/.vite/
+# frontend/dist IS tracked: the deployed container serves it, and a fresh
+# clone then runs without needing npm. Rebuild and commit it after any
+# frontend change — `npm run build` in frontend/.
 
 # Caches and generated data
 *.db
