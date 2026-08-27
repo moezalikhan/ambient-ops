@@ -11,10 +11,11 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend import config
+from backend import report as reporting
 from backend.agent import orchestrator
 from backend.cache import store
 from backend.models import AnalyzeRequest, Route, SimulateRequest
@@ -117,6 +118,33 @@ def agent_trace(run_id: str) -> dict:
     if trace is None:
         raise HTTPException(404, f"unknown run_id {run_id!r}")
     return trace
+
+
+@app.get("/api/report/{run_id}")
+def report(run_id: str, download: bool = True) -> JSONResponse:
+    """The full evidence record behind a ranking.
+
+    A ranked list is a claim; this is the working behind it — every factor
+    value, every raw measurement, the weights used, which factors carried no
+    information, how far the ranking moves when those weights change, and what
+    each simulated intervention assumes.
+
+    Deliberately not rendered in the interface: it is the artefact you attach
+    to a decision or hand to someone who wants to check the arithmetic.
+    """
+    run = orchestrator.get_run(run_id)
+    if run is None:
+        raise HTTPException(404, f"unknown run_id {run_id!r}")
+    if run["status"] != "completed":
+        raise HTTPException(409, f"run {run_id} is {run['status']}")
+
+    body = reporting.build_report(run)
+    headers = (
+        {"Content-Disposition":
+         f'attachment; filename="ambient-ops-{run["route_id"]}-{run_id}.json"'}
+        if download else {}
+    )
+    return JSONResponse(content=body, headers=headers)
 
 
 # --- static interface -----------------------------------------------------

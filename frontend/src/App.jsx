@@ -161,10 +161,18 @@ export default function App() {
           </span>
         )}
         {result && (
-          <span className="status">
-            HPS spread {result.hps_spread} · heat spread {result.heat_spread}
-            {' '}{result.heat_layer?.units}
-          </span>
+          <>
+            <span className="status">
+              HPS spread {result.hps_spread} · heat spread {result.heat_spread}
+              {' '}{result.heat_layer?.units}
+            </span>
+            {/* Served with Content-Disposition: attachment, so a plain link
+                downloads it. The evidence belongs in a file you can attach to
+                a decision, not crammed into the panel. */}
+            <a className="report-link" href={`/api/report/${run.run_id}`}>
+              Download evidence report
+            </a>
+          </>
         )}
       </div>
 

@@ -462,3 +462,13 @@ ol.trace .summary { font-size: 0.74rem; color: var(--text-secondary); margin-top
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .sim-result .chg.good { color: #0ca30c; }
 }
+
+.report-link {
+  font-size: 0.8rem;
+  color: var(--accent);
+  text-decoration: none;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 6px 11px;
+}
+.report-link:hover { border-color: var(--accent); }

@@ -68,6 +68,15 @@ Simulate. Score drops 68.3 to 39.7, rank 1 to 9. Then read the line underneath
 out loud: **magnitude sourced — no, illustrative**, and the trade-off, that
 trees deliver nothing for about a decade.
 
+**6. Download the evidence report.** One click, a JSON file. It carries every
+factor value, every raw measurement, the weights, the degenerate factors, the
+data provenance, the intervention assumptions with their sourcing flags — and
+a sensitivity analysis that zeroes and doubles each weight in turn and reports
+how far the ranking moves. On route A it comes back **Fragile**: the top two
+segments differ by 0.18 HPS and the leader changes under half the
+perturbations. Say that out loud. A team that hands a judge the number that
+undermines its own headline is a team that can be trusted with the rest.
+
 ## If a judge pushes
 
 **"Where does the cooling number come from?"** There isn't one. Every
@@ -78,7 +87,11 @@ as unsourced in the interface.
 
 **"How do you know the ranking is right?"** We don't. There is no ground truth
 to validate against. It is decision support with a transparent model, which is
-why every weight is adjustable and every factor is shown separately.
+why every weight is adjustable and every factor is shown separately. The
+evidence report goes further and measures the problem: it perturbs each weight
+and reports how far the order moves. On route A the answer is that the top two
+segments are within 0.18 HPS of each other, so the honest output is a top
+group rather than a single winner.
 
 **"Is heat actually driving this?"** On route A, partly — the within-route
 spread is 0.63 hours. On route B it is **exactly zero**: the heat layer returns
