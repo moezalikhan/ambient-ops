@@ -484,7 +484,16 @@ This validates model behaviour rather than claiming empirical optimality.
 - Two routes in one city is a demonstration, not evidence of generalisation.
 - The weights are a starting position, not an empirically derived optimum. They
   are exposed as sliders precisely because they are debatable.
-- TODO — anything found during validation that belongs on this list.
+- FortyGuard uncertainty bounds were not available during the hackathon review,
+  so small within-route spreads should be interpreted cautiously.
+- HEI can separate routes better than segments when the route is shorter than
+  the spatial scale of heat variation.
+- DTF depends on the SVI exposure threshold; this is a modelling assumption.
+- Intervention simulation changes HPS inputs, not physical air temperature or
+  full pedestrian thermal comfort.
+- A downloadable evidence report should include raw values, normalised factors,
+  degenerate factors, sensitivity scenarios, and intervention assumptions so
+  reviewers can inspect the basis of the recommendation.
 
 ## 10. References
 
