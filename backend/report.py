@@ -16,6 +16,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from backend import config
+from backend.scoring import interventions as iv
 from backend.scoring import model
 from backend.scoring import simulate as sim
 
@@ -120,6 +121,148 @@ def _sensitivity_verdict(flips, worst, margin, near_top) -> str:
             f"fixed.")
 
 
+def _fmt(v, nd=1):
+    return f"{v:.{nd}f}" if isinstance(v, (int, float)) else "unknown"
+
+
+def _why_this_segment(seg: dict[str, Any]) -> list[str]:
+    """The measurements that put this segment first, in plain words.
+
+    Read off the segment rather than argued: a planner asked to spend money
+    here is entitled to see the numbers that chose it.
+    """
+    raw = seg.get("raw") or {}
+    lc = seg.get("landcover") or {}
+    ctx = seg.get("context") or {}
+    out = [
+        f"Heat exposure: {_fmt(raw.get('heat'))} hours above the threshold "
+        f"accumulated over the analysis window.",
+        f"Unbroken unshaded run: {_fmt(raw.get('exposed_run_m'), 0)} m, about "
+        f"{_fmt((raw.get('dwell_s') or 0) / 60)} minutes of walking at 1.3 m/s.",
+        f"Surface: {_fmt(lc.get('tree'))}% canopy, "
+        f"{_fmt(lc.get('road, route', 0.0) + lc.get('sidewalk, pavement', 0.0))}% "
+        f"paving, {_fmt(lc.get('building'))}% buildings.",
+    ]
+    if ctx.get("transit_within_100m"):
+        out.append("A transit stop lies within 100 m"
+                   + ("; it is sheltered." if ctx.get("shelter")
+                      else ", and it is unsheltered."))
+    amenities = ctx.get("nearby_amenities") or []
+    if amenities:
+        out.append("Nearby: " + ", ".join(
+            f"{a.get('type')} at {a.get('distance_m')} m" for a in amenities[:3])
+            + ".")
+    water = ctx.get("water_within_m")
+    out.append(f"Nearest drinking water: {_fmt(water, 0)} m."
+               if water is not None else
+               "No drinking water tagged within the search radius.")
+    return out
+
+
+def _recommendation(scored: list[dict[str, Any]],
+                    result: dict[str, Any]) -> dict[str, Any]:
+    """What to build first, and the rules that put it on the shortlist.
+
+    The candidates are the intervention table filtered by this segment's own
+    measurements — the same list the agent chose from, so a reader can check
+    the choice rather than take it. No cooling figure is attached to any of
+    them, because none has been sourced.
+    """
+    if not scored:
+        return {
+            "segment_id": None,
+            "candidates": [],
+            "note": "No segments were scored, so no intervention is proposed.",
+            "agent_brief": result.get("brief"),
+        }
+
+    top = scored[0]
+    candidates = [
+        {k: v for k, v in c.items()
+         if k in ("id", "intervention", "cost_tier", "time_to_effect",
+                  "condition", "trade_off", "cooling_estimate", "source")}
+        for c in iv.candidates_for(top)
+    ]
+    return {
+        "segment_id": top.get("id"),
+        "segment_index": top.get("index"),
+        "rank": top.get("rank"),
+        "HPS": top.get("HPS"),
+        "why_this_segment": _why_this_segment(top),
+        "candidates": candidates,
+        "note": (
+            "These are the rows of the intervention table whose conditions "
+            "this segment meets. The agent selects one and justifies it in "
+            "the brief below. Every cooling_estimate is null: no magnitude is "
+            "claimed for any of them."
+            if candidates else
+            "No rule in the intervention table applies to this segment. That "
+            "is reported rather than patched over — inventing an intervention "
+            "outside the table would put an unsourced claim in front of a "
+            "planner."
+        ),
+        "agent_brief": result.get("brief"),
+    }
+
+
+def _conclusion(scored: list[dict[str, Any]], sens: dict[str, Any] | None,
+                degenerate: list[str],
+                recommendation: dict[str, Any]) -> list[str]:
+    """The three things a reader should leave with.
+
+    Composed from the values above rather than written, so the conclusion
+    cannot drift away from what the report actually measured.
+    """
+    out = []
+
+    if scored:
+        top = scored[0]
+        margin = (sens or {}).get("margin_to_second")
+        near = (sens or {}).get("segments_within_2_HPS_of_top") or 1
+        where = (f"Act first on segment {top.get('index')} "
+                 f"({top.get('id')}), which scores {top.get('HPS')} HPS across "
+                 f"{len(scored)} segments.")
+        if margin is not None:
+            where += (f" It leads the second-placed segment by {margin} HPS"
+                      + (f", and {near} segments sit within 2 HPS of it — "
+                         f"treat those as one group, not a ranking."
+                         if near > 1 else "."))
+        out.append(where)
+    else:
+        out.append("No segments were scored, so this run supports no "
+                   "conclusion about where to act.")
+
+    if sens and sens.get("verdict"):
+        out.append("How far to trust that order: " + sens["verdict"])
+
+    if degenerate:
+        out.append(
+            f"{', '.join(degenerate)} took the same value on every segment of "
+            f"this route and so contributed nothing to the ranking. The order "
+            f"above is produced by the remaining factors."
+        )
+
+    cands = recommendation.get("candidates") or []
+    if cands:
+        out.append(
+            "Shortlist for that segment: "
+            + "; ".join(f"{c['intervention']} ({c['cost_tier'].lower()} cost, "
+                        f"effect {c['time_to_effect'].lower()})" for c in cands)
+            + ". No cooling magnitude is claimed for any of them, so choose on "
+              "cost, timing and trade-off, not on a predicted degree count."
+        )
+    else:
+        out.append(recommendation.get("note", ""))
+
+    out.append(
+        "This is decision support with a transparent model, not a prediction. "
+        "There is no ground truth to validate the ranking against, and the "
+        "limitations above are part of the result, not a disclaimer attached "
+        "to it."
+    )
+    return [x for x in out if x]
+
+
 def build_report(run: dict[str, Any]) -> dict[str, Any]:
     """Full evidence record for one completed run."""
     result = run.get("result") or {}
@@ -161,6 +304,8 @@ def build_report(run: dict[str, Any]) -> dict[str, Any]:
         })
 
     degenerate = result.get("degenerate_factors") or []
+    sens = sensitivity(raw_segments, weights) if raw_segments else None
+    recommendation = _recommendation(scored, result)
 
     return {
         "report": "Ambient Ops — evidence record",
@@ -219,8 +364,8 @@ def build_report(run: dict[str, Any]) -> dict[str, Any]:
                         "tags, which is why SVI uses imagery instead.",
             },
         },
-        "sensitivity": (sensitivity(raw_segments, weights)
-                        if raw_segments else None),
+        "sensitivity": sens,
+        "recommendation": recommendation,
         "segments": segments,
         "intervention_assumptions": [
             {
@@ -254,5 +399,6 @@ def build_report(run: dict[str, Any]) -> dict[str, Any]:
             "optimum. The sensitivity section above quantifies how much that "
             "matters for this route.",
         ],
+        "conclusion": _conclusion(scored, sens, degenerate, recommendation),
         "agent_trace": run.get("trace") or [],
     }

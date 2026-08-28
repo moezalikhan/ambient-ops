@@ -260,3 +260,98 @@ def test_the_trace_endpoint_still_exists():
     """The trace moved out of the interface panel, but spec section 9 requires
     the endpoint itself — it is how the agent's reasoning is shown live."""
     assert "/api/agent-trace/{run_id}" in {r.path for r in app.routes}
+
+
+# --- structure: result, solution, conclusion ------------------------------
+
+def test_report_names_a_solution_for_the_top_segment():
+    """A ranking without a recommendation is only half an answer; the report
+    has to say what to build, and from which rows of the table."""
+    r = reporting.build_report(
+        _run([_seg(i, 260.0 + i, transit=(i == 3)) for i in range(4)]))
+    rec = r["recommendation"]
+
+    assert rec["rank"] == 1
+    assert rec["segment_id"] == r["segments"][0]["id"]
+    assert rec["candidates"], "the fixture segments should match some rule"
+    assert all(c["cooling_estimate"] is None for c in rec["candidates"])
+    assert rec["why_this_segment"], "the choice has to show its measurements"
+
+
+def test_solution_says_so_when_no_rule_applies():
+    """Inventing an intervention outside the table would put an unsourced
+    claim in front of a planner. Saying nothing applies is the honest output."""
+    r = reporting.build_report(_run([_seg(0, 260.0, tree=20.0)]))
+    rec = r["recommendation"]
+
+    assert rec["candidates"] == []
+    assert "No rule" in rec["note"]
+
+
+def test_conclusion_restates_the_finding_and_its_limits():
+    r = reporting.build_report(
+        _run([_seg(i, 260.0 + i * 3) for i in range(5)]))
+    text = " ".join(r["conclusion"])
+
+    assert r["segments"][0]["id"] in text
+    assert r["sensitivity"]["verdict"] in text
+    assert "not a prediction" in text
+
+
+def test_conclusion_survives_a_run_with_nothing_scored():
+    r = reporting.build_report(_run_without_segments())
+    assert r["conclusion"]
+    assert r["recommendation"]["candidates"] == []
+
+
+def _run_without_segments():
+    run = _run([_seg(0, 260.0)])
+    run["segments"], run["result"] = [], {}
+    return run
+
+
+# --- structure: the PDF's sections ----------------------------------------
+
+def test_pdf_sections_are_numbered_and_listed_once_each():
+    """The contents strip is built from the same counter as the headings, so
+    a section that a run has no data for is never numbered or listed."""
+    from backend.report_pdf import _Sections
+
+    sec = _Sections()
+    sec.heading("Result", "deck")
+    sec.heading("Evidence — ranked segments", "deck", short="Ranked segments")
+    sec.appendix("A", "what the agent did", "deck", short="Agent trace")
+
+    assert sec.entries == ["1 Result", "2 Ranked segments", "A Agent trace"]
+    assert "1 Result" in sec.strip().text
+
+
+def test_pdf_gist_keeps_enough_of_a_terse_verdict():
+    """"Fragile." is the whole first sentence of one verdict and tells a
+    reader of the summary box nothing on its own."""
+    from backend.report_pdf import _gist
+
+    assert _gist("Fragile. The top two differ by 0.4 HPS and the leader "
+                 "changes.").startswith("Fragile. The top two")
+    assert _gist(None) == "—"
+
+
+def test_pdf_escapes_the_agent_brief():
+    """The brief is model-written prose dropped into a markup-aware renderer."""
+    from backend import report_pdf
+
+    run = _run([_seg(i, 260.0 + i) for i in range(3)])
+    run["result"]["brief"] = "Trees & shade <are> the answer"
+    assert report_pdf.render_pdf(reporting.build_report(run))[:5] == b"%PDF-"
+
+
+def test_pdf_folds_punctuation_the_font_cannot_draw():
+    """The standard PDF fonts are WinAnsi-encoded. A non-breaking hyphen — which
+    the model writes constantly — has no glyph there and lands on the page as a
+    black box, so it is folded to an ASCII hyphen before rendering."""
+    from backend.report_pdf import _WINANSI_FALLBACK
+
+    folded = "highest‑ranking 50‑metre​ stretch".translate(
+        _WINANSI_FALLBACK)
+    assert folded == "highest-ranking 50-metre stretch"
+    folded.encode("cp1252")   # cp1252 is WinAnsi; nothing left the font lacks
