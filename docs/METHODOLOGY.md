@@ -302,10 +302,28 @@ environmental and occupational health hazard and notes that health impacts
 depend on exposure intensity, duration, timing, vulnerability, and local
 adaptation. HEI is therefore the anchor factor: it measures accumulated
 dangerous-heat exposure before the model adds walking exposure, street
-vulnerability, and sensitive-destination context. However, HEI is allowed to
-matter only when it varies within the route. If the heat layer is constant, the
-model marks HEI as degenerate and the agent must not cite it as the reason one
-segment outranks another.
+vulnerability, and sensitive-destination context.
+
+HEI contributes to segment-level ranking only when heat exposure varies within
+the route. If the heat layer is constant, HEI cannot explain why one segment
+should rank above another. In that case, the model marks HEI as a degenerate
+factor and assigns the same neutral value to every segment, so it does not
+affect the within-route ordering. HEI still describes the route-level heat
+context, while the segment ranking is explained by the remaining varying
+factors: DTF, SVI, and PSI.
+
+Numerically, a constant heat layer gives every segment `HEI = 0.5`. With the
+default `HEI = 0.40` weight, this adds the same 20-point baseline to every
+segment's HPS:
+
+```
+100 * 0.40 * 0.5 = 20
+```
+
+Because every segment receives the same HEI contribution, HEI does not change
+their relative ranking. Using 0 instead would imply no heat exposure, which
+would be misleading when the whole route is hot; 0.5 is neutral for ranking
+while preserving the route-level heat context.
 
 **DTF = 0.20.** Exposure duration matters because the same heat condition is
 more consequential when a pedestrian remains in an unshaded run for longer.
@@ -329,13 +347,6 @@ necessary or where exposed people may be more sensitive.
 These weights should be tested with sensitivity analysis. A stable top segment
 across weight scenarios can be described as robust; a changing top segment is a
 policy-sensitive decision, not a model failure.
-
-**This now needs revisiting rather than justifying as written.** HEI carries
-the heaviest weight (0.40) but cannot separate segments within a route — on
-route B it separates nothing at all. Either the weight drops, or HEI is
-reframed as a route-level severity multiplier rather than a segment-level
-factor. Both are defensible; the sliders make the choice arguable in public,
-which is where it belongs.
 
 ### 5.2 HEI — Heat Exposure Index (0–1)
 
