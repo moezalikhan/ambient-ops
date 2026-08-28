@@ -212,11 +212,7 @@ scores would still differ, and nothing in the output would reveal it.
    defensible alternative that matches the spec's stated intent ("longer
    unbroken exposure is worse") is the length of the *continuous unshaded run*
    a segment belongs to, not the segment's own length. That depends on SVI, so
-   it must be computed after it. Minqi's call.
-
-TODO — Minqi: decide the factor set and weights in light of the above, and
-record the reasoning here. The sliders make the weights debatable in public,
-which is the right place for this to be argued.
+   it must be computed after it. 
 
 The implemented factor set keeps HEI, DTF, SVI, and PSI, but updates how they are interpreted after testing them on the real routes.
 
@@ -294,8 +290,6 @@ on route B:
 
 The segments with no matching intervention are the best-shaded ones, where
 "nothing needed here" is the correct answer rather than a gap.
-
-### 5.1 Weight justification
 
 ### 5.1 Weight justification
 
@@ -432,10 +426,6 @@ TODO — state exactly which factor each intervention modifies and by how much,
 and label the magnitude as literature-derived or illustrative.
 
 ## 8. Validation
-
-TODO — there is no ground truth to validate against. Describe what was done
-instead: sanity checks, hand-worked examples, cases where the ranking looked
-wrong and what was found.
 
 There is no ground-truth intervention outcome during the hackathon. The
 validation target is therefore transparency and face validity: the ranking
